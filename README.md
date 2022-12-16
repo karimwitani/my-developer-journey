@@ -50,3 +50,24 @@ My personal knowledge base. It's a bunch of QAs, documentation &amp; code snippe
   <form (ngSubmit)=methodName(templateRefName.value)>
 
   ```
+
+  - The final product would look something like the following (for an example login form):
+
+  ```html
+  <form #loginForm="ngForm" (ngSubmit)="login(loginForm.value)">
+    <div class="form-group">
+        <label for="emailAddress">Email</label>
+        <input name="emailAddress" type="email" class="form-control" id="emailAddress">
+    </div>
+    <div class="form-group">
+        <label for="password">Password</label>
+        <input name="password" type="password" class="form-control" id="password">
+    </div>
+    <button type="submit" class="btn btn-primary"></button>
+  </form>
+
+  ```
+
+<p align="left" style="padding-left:40px">
+    <img width= 500px src="assets/angular/angular-1.png">
+</p>
