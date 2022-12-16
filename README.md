@@ -68,6 +68,6 @@ My personal knowledge base. It's a bunch of QAs, documentation &amp; code snippe
 
   ```
 
-<p align="left" style="padding-left:40px;">
+<p align="left" style="padding-left:60px;">
     <img style="border: 5px solid black" width=500px src="assets/angular/angular-1.png">
 </p>
