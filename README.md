@@ -1,6 +1,7 @@
 # My Developer Journey
 
-My personal knowledge base. It's a bunch of QAs, documentation &amp; code snippets that I gathered along the way of becoming a software engineer.
+My personal knowledge base. It's a bunch of QAs, documentation &amp; code snippets that I gathered along the way of  
+becoming a software engineer.
 
 ## Angular
 
@@ -14,7 +15,8 @@ My personal knowledge base. It's a bunch of QAs, documentation &amp; code snippe
 
 - *How do template based forms differ from reactive forms?*  
 - *How do template forms work in angular?*  
-  - A form is composed of a `<form>` tag that contains divs of the **form-group** class. Each form group contains a `<label>` and a `<input>` tag. Finally you have a submit button
+  - A form is composed of a `<form>` tag that contains divs of the **form-group** class. Each form group contains a  
+  `<label>` and a `<input>` tag. Finally you have a submit button
   
   ```html
   <form>
@@ -26,7 +28,8 @@ My personal knowledge base. It's a bunch of QAs, documentation &amp; code snippe
   </form>
   ```
 
-  - A form should have a  **template ref** variable that so we can refer to the form as a whole.  We assign this variable the value **ngForm** which is a directive [See Official Angular Documentation on Directives](https://angular.io/guide/attribute-directives)
+  - A form should have a  **template ref** variable that so we can refer to the form as a whole.  We assign this  
+  variable the value **ngForm** which is a directive [See Official Angular Documentation on Directives](https://angular.io/guide/attribute-directives)
 
   ```html
   <form #formName="ngForm">
@@ -38,13 +41,17 @@ My personal knowledge base. It's a bunch of QAs, documentation &amp; code snippe
   <input name="fieldName">
   ```  
 
-  - Input tags need an event listener, ngModel. It's used to encapsulate other event such as key presses and focus, blur, etc (anything that has to do with input control).  We give it a placeholder value that we'll use later on in the form data.  
+  - Input tags need an event listener, ngModel. It's used to encapsulate other event such as key presses and focus,  
+  blur, etc (anything that has to do with input control).  We give it a placeholder value that we'll use later on in  
+  the form data.  
   
   ```html
   <input (ngModel)="model.fieldName">
   ```  
 
-  - To submit a form you need to add a (ngSubmit) event listener to the `<form>` tag. We assign it to the method that we want to call when submitting the form and pass the **template ref variable** value of the form to it (it's an object container key value pairs of the fields and the submitted values).
+  - To submit a form you need to add a (ngSubmit) event listener to the `<form>` tag. We assign it to the method that  
+  we want to call when submitting the form and pass the **template ref variable** value of the form to it (it's an  
+  object container key value pairs of the fields and the submitted values).
 
   ```html
   <form (ngSubmit)=methodName(templateRefName.value)>
