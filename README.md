@@ -64,11 +64,10 @@ becoming a software engineer.
   <form #loginForm="ngForm" (ngSubmit)="login(loginForm.value)">
     <div class="form-group">
         <label for="emailAddress">Email</label>
-        <input name="emailAddress" type="email" class="form-control" id="emailAddress">
-    </div>
-    <div class="form-group">
+        <input name="emailAddress" (ngModel)="model.emailAddress" type="email" class="form-control" id="emailAddress">
+
         <label for="password">Password</label>
-        <input name="password" type="password" class="form-control" id="password">
+        <input name="password"  (ngModel)="model.password" type="password" class="form-control" id="password">
     </div>
     <button type="submit" class="btn btn-primary"></button>
   </form>
