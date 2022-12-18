@@ -5,8 +5,6 @@ becoming a software engineer.
 
 ## Angular
 
----
-
 ### Angular - General  
 
 ---
