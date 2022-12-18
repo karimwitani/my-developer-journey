@@ -3,7 +3,6 @@
 My personal knowledge base. It's a bunch of QAs, documentation &amp; code snippets that I gathered along the way of  
 becoming a software engineer.
 
-
 - [My Developer Journey](#my-developer-journey)
   - [Angular](#angular)
     - [Angular - General](#angular---general)
@@ -13,6 +12,7 @@ becoming a software engineer.
       - [*How do template based forms differ from reactive forms?*](#how-do-template-based-forms-differ-from-reactive-forms)
       - [How do template forms work in angular?](#how-do-template-forms-work-in-angular)
       - [How does two-way binding work in Angular Forms?](#how-does-two-way-binding-work-in-angular-forms)
+      - [What is controle state in Angular forms?](#what-is-controle-state-in-angular-forms)
 
 ## Angular
 
@@ -139,4 +139,36 @@ input field
 <label for="emailAddress">Email</label>
 <input name="emailAddress" [(ngModel)]="model.emailAddress" type="email" class="form-control" id="emailAddress">
 {{model.emailAddress}}
+```
+
+#### What is controle state in Angular forms?
+
+- Each input form control and the form itself are assigned one value from three pairs
+  - Pristine / Dirty
+  - Touched / Untouched
+  - Valid / Invalid
+- These states will control which class are assigned to the html tags of those form controls.
+  - ng-pristine/ng-dirty
+  - ng-touched/ng-untouched
+  - ng-valide/ng-invalid
+- In the template this will be reflected as below:
+
+```html
+<input ... class="form-control ng-untouched ng-pristine ng-valid" id="emailAddress">
+```
+
+- The default for each form-control is pristine and untouched and those will flip once the element's value is changed  
+or was focused/unfocused. The valid/invalid will depend on the presence of validation rules such as the required  
+field.
+
+```html
+<input ... required class="form-control" id="emailAddress">
+```
+
+- You can control the look of form control element through css tied to the classes or directives (display popus  
+for example).  This is done by created an element ref variable on the input and assigning it to ngModel
+
+```html
+<input ... required #nameModel="ngModel" ngclass="form-control" id="emailAddress">
+{{ngModel.valid}} //invalid if nothing is in the field, ng-invalid css could be {border: solid 3px red}
 ```
