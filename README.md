@@ -3,6 +3,17 @@
 My personal knowledge base. It's a bunch of QAs, documentation &amp; code snippets that I gathered along the way of  
 becoming a software engineer.
 
+
+- [My Developer Journey](#my-developer-journey)
+  - [Angular](#angular)
+    - [Angular - General](#angular---general)
+      - [*What are directives in Angular?*](#what-are-directives-in-angular)
+    - [Angular - Routing](#angular---routing)
+    - [Angular - Forms](#angular---forms)
+      - [*How do template based forms differ from reactive forms?*](#how-do-template-based-forms-differ-from-reactive-forms)
+      - [How do template forms work in angular?](#how-do-template-forms-work-in-angular)
+      - [How does two-way binding work in Angular Forms?](#how-does-two-way-binding-work-in-angular-forms)
+
 ## Angular
 
 ### Angular - General  
