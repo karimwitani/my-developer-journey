@@ -20,6 +20,13 @@
       - [Authentication decision tree](#authentication-decision-tree)
       - [Configure password writeback](#configure-password-writeback)
     - [Deploy Azure AD identity protection](#deploy-azure-ad-identity-protection)
+      - [Identity Protection policies](#identity-protection-policies)
+      - [Configuring risk event detections](#configuring-risk-event-detections)
+      - [Implement user risk policy](#implement-user-risk-policy)
+      - [Implement sign-in risk policy](#implement-sign-in-risk-policy)
+      - [Deploy multi-factor authentication](#deploy-multi-factor-authentication)
+      - [Azure AD conditional access](#azure-ad-conditional-access)
+      - [Configuring conditional access conditions](#configuring-conditional-access-conditions)
   - [AZ-500: Implement platform protection](#az-500-implement-platform-protection)
   - [AZ-500: Secure your data and applications](#az-500-secure-your-data-and-applications)
   - [AZ-500: Manage security operation](#az-500-manage-security-operation)
@@ -228,6 +235,116 @@ in their on-prem directories. It can enforce on-prem password rules, is synchron
 outbound firewall rules (uses Azure Service Bus to communicate outbound over port 443).
 
 ### Deploy Azure AD identity protection
+
+Identity Protection is a tool that allows organizations to automate the detection and remediation of identity-based risks.
+
+- Creating access reviews to check on how each identity is being used and that the correct rights are assigned.
+- Configure policies to identify risky user behaviors and odd sign-in patterns.
+- Control and manage access to resources with conditional access policies.
+
+#### Identity Protection policies
+
+Identity Protection includes three default policies that admin can choose to enable.
+
+- Multi-Factor authentication registration policy
+  - Ensures new users sign up for MFA at registration
+- Sign-in risk policy
+  - Each sign-in event creates signales which Identity Protection will calculate a risk score from. These scores can be
+  used by admins to decide wether to grant/block access or require MFA.
+- User risk remediation policy
+
+![Azure Identity Protection](../assets/azure/azure-identity-protection-policies.png)
+
+#### Configuring risk event detections
+
+ Azure AD Identity Protection policies can automatically block a sign-in attempt or require additional action, such as
+ requiring a password change or prompt for Azure AD Multi-Factor Authentication.
+
+Some of the following actions may trigger Azure AD Identity Protection risk detection:
+
+- Users with leaked credentials.
+- Sign-ins from anonymous IP addresses.
+- Impossible travel to atypical locations.
+- Sign-ins from infected devices.
+- Sign-ins from IP addresses with suspicious activity.
+
+You can choose to turn the policy enforcement on or off, select users or groups for the policy to apply to, and decide
+if you want to block access at sign-in or prompt for additional action.
+
+- ***User risk policy*** - Identifies and responds to user accounts that may have compromised credentials. Can prompt
+the user to create a new password.
+- **Sign-in risk policy** - Identifies and responds to suspicious sign-in attempts. Can prompt the user to provide
+additional forms of verification using Azure AD Multi-Factor Authentication.
+- **MFA registration policy** - Makes sure users are registered for Azure AD Multi-Factor Authentication. If a sign-in
+risk policy prompts for MFA, the user must already be registered for Azure AD Multi-Factor Authentication.
+
+#### Implement user risk policy
+
+Identity Protection can calculate what it believes is normal for a user's behavior and use that to base decisions for
+their risk. User risk is a calculation of probability that an identity has been compromised.
+
+![azure user risk policy](../assets/azure/azure-user-risk-policy.png)
+
+With the information provided by the risky users report, administrators can find:
+
+- Which users are at risk, have had risk remediated, or have had risk dismissed?
+- Details about detections
+- History of all risky sign-ins
+- Risk history
+
+Administrators can then choose to act on these events. Administrators can choose to:
+
+- Reset the user password
+- Confirm user compromise
+- Dismiss user risk
+- Block user from signing in
+- Investigate further using Azure ATP (Azure Advanced Threat Detection, now known as Azure Defender)
+
+#### Implement sign-in risk policy
+
+Sign-in risk represents the probability that a given authentication request isn't authorized by the identity owner. It
+supports the following conditions:
+
+- Location
+- Client apps
+- Risky sign-ins
+
+#### Deploy multi-factor authentication
+
+The security of MFA two-step verification lies in its layered approach. Compromising multiple authentication factors presents
+a significant challenge for attackers. Even if an attacker manages to learn the user's password, it is useless without
+also having possession of the additional authentication method. Authentication methods include:
+
+- Something you know (typically a password)
+- Something you have (a trusted device that is not easily duplicated, like a phone)
+- Something you are (biometrics)
+
+MFA Options:
+
+- Call to phone
+- Text to phone
+- Notification through mobile app
+- Verification code from mobile ap
+
+#### Azure AD conditional access
+
+Conditional Access is at the heart of the new identity driven control plane. Using attributes that we know about users
+(location, device, application) we can compute risk scores and those will determine if access is granted. They can be
+though of as if-then statements and they are triggerd after the first-factor authentication has been complete (password).
+
+![azure conditional access](../assets/azure/azure-conditional-access.png)
+
+#### Configuring conditional access conditions
+
+Conditional access comes with six conditions: user/group, cloud application, device state, location (IP range),
+client application, and sign-in risk. You can use combinations of these conditions to get the exact conditional access
+policy you need.
+
+![configuring azure conditional access](../assets/azure/azure-configuring-conditional-access.png)
+
+Conditional access conditions are configured in the portal through Azure Active Directory > Security > Conditional Access
+
+![conditional access conditions creation menu](../assets/azure/azure-conditional-access-creatio-menu.png)
 
 ## [AZ-500: Implement platform protection](https://learn.microsoft.com/en-us/training/paths/implement-platform-protection/)
 
