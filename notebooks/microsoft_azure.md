@@ -27,7 +27,31 @@
       - [Deploy multi-factor authentication](#deploy-multi-factor-authentication)
       - [Azure AD conditional access](#azure-ad-conditional-access)
       - [Configuring conditional access conditions](#configuring-conditional-access-conditions)
+    - [Configure Azure AD privileged identity management](#configure-azure-ad-privileged-identity-management)
+      - [Intro](#intro)
+      - [Explore the zero trust model](#explore-the-zero-trust-model)
+        - [Microsoft's zero trust architecture](#microsofts-zero-trust-architecture)
+    - [Design an enterprise governance strategy](#design-an-enterprise-governance-strategy)
+      - [Management Groups](#management-groups)
+      - [Configure Azure policies](#configure-azure-policies)
   - [AZ-500: Implement platform protection](#az-500-implement-platform-protection)
+    - [Implement perimeter security](#implement-perimeter-security)
+      - [Virtual network security](#virtual-network-security)
+      - [Enable Distributed Denial of Service (DDoS) Protection](#enable-distributed-denial-of-service-ddos-protection)
+      - [Configure a distributed denial of service protection implementation](#configure-a-distributed-denial-of-service-protection-implementation)
+      - [Azure Firewall features](#azure-firewall-features)
+      - [Firewall rules to secure Azure Storage](#firewall-rules-to-secure-azure-storage)
+      - [Deploy an Azure Firewall implementation](#deploy-an-azure-firewall-implementation)
+      - [Configure VPN forced tunneling](#configure-vpn-forced-tunneling)
+      - [Create User Defined Routes and Network Virtual Appliances](#create-user-defined-routes-and-network-virtual-appliances)
+      - [Hub and spoke topology](#hub-and-spoke-topology)
+    - [Configure network security](#configure-network-security)
+      - [Network security groups (NSGs)](#network-security-groups-nsgs)
+      - [Service Endpoints](#service-endpoints)
+      - [Private links](#private-links)
+      - [Azure application gateway](#azure-application-gateway)
+      - [Azure front door](#azure-front-door)
+      - [ExpressRoute](#expressroute)
   - [AZ-500: Secure your data and applications](#az-500-secure-your-data-and-applications)
   - [AZ-500: Manage security operation](#az-500-manage-security-operation)
 - [Microsoft Certified: Cybersecurity Architect Expert link](#microsoft-certified-cybersecurity-architect-expert-link)
@@ -145,7 +169,7 @@ Administrative units are Azure AD ressources that can be containers for other re
 in a role to any portion of the organization that you define. They are used in organization where there are multiple
 independent division. The admin of a given division will have scopes limited to the users of that division.
 
-![azure admin units](../assets/azure/azure-admin-units.png)
+![azure admin units](../assets/azure/az500-admin-units.png)
 
 ##### Azure AD Admin Unit Roles
 <!-- markdownlint-disable MD013 -->
@@ -172,7 +196,7 @@ the screen to the one on their phone, and then using their biometric (touch or f
 Temporary Access Pass (preview) - time-limited passcode allows you to set up security keys and the Microsoft
 Authenticator without ever needing to use, much less know, your password!
 
-![passowrdless azure AD](../assets/azure/azure-active-directory-passwordless.png)
+![passowrdless azure AD](../assets/azure/az500-active-directory-passwordless.png)
 
 ### Implement Hybrid identity
 
@@ -216,7 +240,7 @@ two different directories.
 When users sign-in using Azure AD, Pass-through authentication validates the users’ passwords directly against an organization's
 on-premise Active Directory.
 
-![Azure PTA](../assets/azure/azure-pta.png)
+![Azure PTA](../assets/azure/az500-pta.png)
 
 #### Deploy Federation with Azure AD
 
@@ -226,7 +250,7 @@ occurs on-premises. This method allows administrators to implement more rigorous
 
 #### Authentication decision tree
 
-![Azure AD Decision Tree](../assets/azure/azure-auth-decision-tree.png)
+![Azure AD Decision Tree](../assets/azure/az500-auth-decision-tree.png)
 
 #### Configure password writeback
 
@@ -253,7 +277,7 @@ Identity Protection includes three default policies that admin can choose to ena
   used by admins to decide wether to grant/block access or require MFA.
 - User risk remediation policy
 
-![Azure Identity Protection](../assets/azure/azure-identity-protection-policies.png)
+![Azure Identity Protection](../assets/azure/az500-identity-protection-policies.png)
 
 #### Configuring risk event detections
 
@@ -283,7 +307,7 @@ risk policy prompts for MFA, the user must already be registered for Azure AD Mu
 Identity Protection can calculate what it believes is normal for a user's behavior and use that to base decisions for
 their risk. User risk is a calculation of probability that an identity has been compromised.
 
-![azure user risk policy](../assets/azure/azure-user-risk-policy.png)
+![azure user risk policy](../assets/azure/az500-user-risk-policy.png)
 
 With the information provided by the risky users report, administrators can find:
 
@@ -332,7 +356,7 @@ Conditional Access is at the heart of the new identity driven control plane. Usi
 (location, device, application) we can compute risk scores and those will determine if access is granted. They can be
 though of as if-then statements and they are triggerd after the first-factor authentication has been complete (password).
 
-![azure conditional access](../assets/azure/azure-conditional-access.png)
+![azure conditional access](../assets/azure/az500-conditional-access.png)
 
 #### Configuring conditional access conditions
 
@@ -340,13 +364,464 @@ Conditional access comes with six conditions: user/group, cloud application, dev
 client application, and sign-in risk. You can use combinations of these conditions to get the exact conditional access
 policy you need.
 
-![configuring azure conditional access](../assets/azure/azure-configuring-conditional-access.png)
+![configuring azure conditional access](../assets/azure/az500-configuring-conditional-access.png)
 
 Conditional access conditions are configured in the portal through Azure Active Directory > Security > Conditional Access
 
-![conditional access conditions creation menu](../assets/azure/azure-conditional-access-creatio-menu.png)
+![conditional access conditions creation menu](../assets/azure/az500-conditional-access-creatio-menu.png)
+
+### Configure Azure AD privileged identity management
+
+#### Intro
+
+- Configuring the scope of users and roles based on zero trust.
+- Setting up a PIM workflow to enforce approval for role usage, and monitor the access.
+- Implement just-in-time access.
+
+#### Explore the zero trust model
+
+Modern cybersecurity no longer just focuses on defense perimter, treating everything outside of it as hostile while
+assuming that everything on the inside is safe. The current model assumes breach and uses the zero-trust model to
+manage that new paradigm.
+
+The Zero Trust model assumes breach and verifies each request as though it originates from an open network.
+
+![zero trust model](../assets/azure/az500-zero-trust-diagram.png)
+
+Notice the trust determination components:
+
+- Identity provider. Establishes a user’s identity and related information.
+- Device directory. Validates a device and the device integrity.
+- Policy evaluation service. Determines whether the user and device conform to security policies.
+- Access proxy. Determines which organizational resources can be accessed.
+
+Implementing zero-trust requires the following:
+
+- Signals: to make informed decisions
+- Organizational policy: to guide decisions
+- Enforcement ability
+
+The guiding principles of zero trust are:
+
+- Verify explicitly
+- Use leasrt priviledged access
+- Assume breach
+
+##### Microsoft's zero trust architecture
+
+![microsoft zero trust architecture](../assets/azure/az500-zero-trust-architecture.png)
+
+- Intune is used for device management and device security policy configuration
+- Azure AD Conditional Access is used for device health/user validation
+- Azure AD is used for user and device inventory
+
+Ways to use PIM (Privileged Identity Management)
+
+- View which users are assigned privileged roles to manage Azure resources, as well as which users are assigned
+administrative roles in Azure AD.
+- Enable on-demand, “just in time” administrative access to Microsoft Online Services like Microsoft 365 and Intune,
+and to Azure resources of subscriptions, resource groups, and individual resources such as Virtual Machines.
+- Review a history of administrator activation, including what changes administrators made to Azure resources.
+- Get alerts about changes in administrator assignments.
+- Require approval to activate Azure AD privileged admin roles.
+- Review membership of administrative roles and require users to provide a justification for continued membership.
+
+[Azure PIM Docs](https://learn.microsoft.com/en-us/azure/active-directory/privileged-identity-management/)
+
+### Design an enterprise governance strategy
+
+- Explain the shared responsibility model and how it impacts your security configuration
+- Create Azure policies to protect your solutions
+- Configure and deploy access to services using RBAC
+
+As computing environments move from customer-controlled datacenters to the cloud, the responsibility of security also shifts.
+
+![azure shared responsability mode](../assets/azure/az500-shared-responsibility-model.png)
+
+Azure Resource Manager is the deployment and management service for Azure. It provides a consistent management layer that
+allows you to create, update, and delete resources in your Azure subscription. You can use its access control, auditing,
+and tagging features to help secure and organize your resources after deployment.
+
+![ressource manager interface](../assets/azure/az500-resource-manager-interface.png)
+
+Azure provides four levels of scope: management groups, subscriptions, resource groups, and resources. 
+
+![assert hierarchy in azure](../assets/azure/az500-hierarchy.png)
+
+You apply management settings at any of these levels of scope. The level you select determines how widely the setting is
+applied. Lower levels inherit settings from higher levels.
+
+#### Management Groups
+
+Management groups are an Azure resource to create flexible and very maintainable hierarchies within the structure of
+your environment. Management groups exist above the subscription level thus allowing subscriptions to be grouped together.
+This grouping facilitates applying policies and RBAC permissions to those management groups.
+
+![azure mangement groups](../assets/azure/az500-management-group-geography.png)
+
+The value of management groups:
+
+- Group your subscriptions
+- Mirror your oragnization structure
+- Apply policies and RBAC controls to services
+
+#### Configure Azure policies
+
+Azure Policy is a service you use to create, assign, and manage policies. These policies enforce different rules and
+effects over your resources so that those resources stay compliant with your corporate standards and service level
+agreements. Azure Policy meets this need by evaluating your resources for noncompliance with assigned policies
+
+![azure policies](../assets/azure/az500-azure-policy.png)
 
 ## [AZ-500: Implement platform protection](https://learn.microsoft.com/en-us/training/paths/implement-platform-protection/)
+
+### Implement perimeter security
+
+A security engineer uses perimeter security features to block network traffic away from your primary network resources
+
+- Setup DDoS (denial-of-service) Protection.
+- Configure and maintain firewalls.
+- Use dedicated routes and network appliance to protect your network.
+
+The key skills in the section are:
+
+- Implement advanced network security
+- Create and configure Azure Firewall
+- Implement Azure Firewall Manager
+- Configure a firewall on a storage account, Azure SQL, Key Vault, or App Service
+- Implement DDoS protection
+
+As previous models of perimeter defense become inadequate (DMZs, VNets ...) Network micro-segmentation is becoming the
+new standard for protecting your assets. Granting access at access-time avoids the need to play a prediction game for
+an entire deployment, network, or subnet – only the destination resource needs to provide the necessary access controls.
+
+- **Azure Network Security Groups** can be used for basic layer 3 & 4 access controls between Azure Virtual Networks,
+their subnets, and the Internet.
+- **Application Security Groups** enable you to define fine-grained network security policies based on workloads,
+centralized on applications, instead of explicit IP addresses.
+- **Azure Web Application Firewall and the Azure Firewall** can be used for more advanced network access controls that
+require application layer support.
+- **Local Admin Password Solution (LAPS)** or a third-party Privileged Access Management can set strong local admin
+passwords and just in time access to them.
+
+#### Virtual network security
+
+A VNet is a representation of your own network in the cloud. A VNet is a logical isolation of the Azure cloud network
+dedicated to your subscription. You can connect VNets to your on-premises networks.
+
+![azure virtual networks](../assets/azure/az500-network-security.png)
+
+Azure supports dedicated WAN link connectivity to your on-premises network and an Azure Virtual Network with ExpressRoute.
+The link between Azure and your site uses a dedicated connection that does not go over the public Internet. If your Azure
+application is running in multiple datacenters, you can use Azure Traffic Manager to route requests from users intelligently
+across instances of the application.
+
+- **Virtual networks** are network overlays that you can use to configure and control the connectivity among Azure resources.
+  - Scoped to a single Azure region
+  - An Azure region is a set of datacenters deployed within a latency-defined perimeter and connected through a dedicated
+  regional low-latency network.
+  - You can implement multiple virtual networks within each Azure subscription and Azure region. Each virtual network is
+  isolated from other virtual networks.
+  - For each virtual network you can:
+    - Specify a custom private IP address space using public and private addresses
+    - Segment the virtual network into one or more subnets
+    - Use Azure-provided name resolution, or specify your own DNS server
+- **IP addresses**
+  - **Private** - A private IP address is dynamically or statically allocated to a VM from the defined scope of IP addresses
+  in the virtual network.
+  - **Public** - Public IP addresses, which allow Azure resources to communicate with external clients, are assigned directly
+  at the virtual network adapter of the VM or to the load balancer.
+- **Subnets**
+  - You can divide networks using subnets for logical and security-related isolation of resources.
+- **Network adapters**
+  - Virtual network adapters configure VMs IP address.
+  - A VM can have more than one network adapter.
+
+#### Enable Distributed Denial of Service (DDoS) Protection
+
+Botnets: collections of internet-connected systems that an individual controls and uses without their owners’ knowledge.
+
+DDoS: collection of attack types aimed at disrupting the availability of a target. These attacks involve a coordinated
+effort that uses multiple internet-connected systems to launch many network requests against DNS, web services, email.
+
+- Best practice 1: Ensure that security is a priority throughout the entire lifecycle of an application
+Pillar
+
+| Pillar       | Description                                                               |
+| ------------ | ------------------------------------------------------------------------- |
+| Scalability  | The ability of a system to handle increased load                          |
+| Availability | The proportion of time that a system is functional and working            |
+| Resiliency   | The ability of a system to recover from failures and continue to function |
+| Management   | Operations processes that keep a system running in production             |
+| Security     | Protecting applications and data from threats                             |
+
+- Design your applications to scale horizontally to meet the demands of an amplified load
+  - For Azure App Service, select an App Service plan that offers multiple instances.
+  - For Azure Cloud Services, configure each of your roles to use multiple instances.
+  - For Azure Virtual Machines, ensure that your VM architecture includes more than one VM and that each VM is included
+  in an availability set.
+
+- Layer security defenses in an application to reduce the chance of a successful attack.
+  - reduce the surface area by using IP allowlists to close down the exposed IP address space and listening ports that
+  aren’t needed on the load balancers
+  - You can also use NSGs to reduce the attack surface. You can use service tags and application security groups as a 
+  natural extension of an application’s structure to minimize complexity for creating security rules and configuring
+  network security.
+
+#### Configure a distributed denial of service protection implementation
+
+- Infrastructure: using always-on traffic monitoring adn real-time mitigation of common network-level attacks.
+- Network Protection: Protection policies are tuned through dedicated traffic monitoring and machine learning algorithms.
+Policies are applied to public IP addresses associated to resources deployed in virtual networks, such as Azure Load
+Balancer, Azure Application Gateway, and Azure Service Fabric instances, but this protection does not apply to App Service
+Environments.
+
+During mitigation, DDoS Protection redirects traffic sent to the protected resource and performs several checks, including:
+
+- Helping ensure that packets conform to internet specifications and aren’t malformed.
+- Interacting with the client to determine if the traffic might be a spoofed packet (for example, using SYN Auth or SYN
+Cookie or dropping a packet for the source to retransmit it).
+- Using rate-limit packets if it can’t perform any other enforcement method.
+
+Types of denial-of-service attacks that Azure protection mitigates:
+
+- Volumetric attacks: The attack's goal is to flood the network layer with a substantial amount of seemingly legitimate traffic.
+- Protocol attacks: These attacks render a target inaccessible, by exploiting a weakness in the layer 3 and layer 4 protocol
+stack. It includes, SYN flood attacks, reflection attacks, and other protocol attacks. DDoS Protection mitigates these
+attacks, differentiating between malicious and legitimate traffic, by interacting with the client, and blocking malicious
+traffic.
+- Resource (application) layer attacks: These attacks target web application packets, to disrupt the transmission of data
+between hosts. The attacks include HTTP protocol violations, SQL injection, cross-site scripting, and other layer 7 attacks.
+Use a Web Application Firewall, such as the Azure Application Gateway web application firewall, as well as DDoS Protection
+to provide defense against these attacks.
+
+#### Azure Firewall features
+
+Azure Firewall is a managed, cloud-based network security service that protects your Azure Virtual Network resources.
+
+![az500-firewall](../assets/azure/az500-firewall.png)
+
+- **Built-in high availability** - Because high availability is built in, no additional load balancers are required and
+there’s nothing you need to configure.
+- **Unrestricted cloud scalability** - Azure Firewall can scale up as much as you need.
+- **Application Fully Qualified Domain Name (FQDN) filtering rules** - You can limit outbound HTTP/S traffic to a specified
+list of FQDNs, including wild cards. This feature does not require SSL termination.
+- **Network traffic filtering rules** - You can centrally create allow or deny network filtering rules by source and
+destination IP address, port, and protocol. Azure Firewall is fully stateful, so it can distinguish legitimate packets
+for different types of connections.
+- **Qualified domain tags** - Fully Qualified Domain Names (FQDN) tags make it easier for you to allow well known Azure
+service network traffic through your firewall. For example, say you want to allow Windows Update network traffic through
+your firewall. You create an application rule and include the Windows Update tag. Now network traffic from Windows Update
+can flow through your firewall
+- **Outbound Source Network Address Translation (OSNAT) support** - All outbound virtual network traffic IP addresses are
+translated to the Azure Firewall public IP. You can identify and allow traffic originating from your virtual network
+to remote internet destinations.
+- **Inbound Destination Network Address Translation (DNAT) support** - Inbound network traffic to your firewall public IP
+address is translated and filtered to the private IP addresses on your virtual networks.
+- **Azure Monitor logging** - All events are integrated with Azure Monitor, allowing you to archive logs to a storage account,
+stream events to your Event Hub, or send them to Azure Monitor logs.
+
+Azure Firewall has three rule types: NAT rules, network rules, and application rules. The application order precedence
+for the rules are that network rules are applied first, then application rules. Rules are terminating, which means if a
+match is found in network rules, then application rules are not processed. If there’s no network rule match, and if the
+packet protocol is HTTP/HTTPS, the packet is then evaluated by the application rules. If no match continues to be found,
+then the packet is evaluated against the infrastructure rule collection. If there’s still no match, then the packet is
+denied by default.
+
+#### Firewall rules to secure Azure Storage
+
+An application that accesses a storage account when network rules are in effect requires proper authorization on the request.
+Authorization is supported with Azure AD credentials for blobs and queues, a valid account access key, or a SAS token.
+
+You can configure storage accounts to allow access only from specific VNets. You enable a service endpoint for Azure
+Storage within the VNet. This endpoint gives traffic an optimal route to the Azure Storage service. The identities of
+the virtual network and the subnet are also transmitted with each request.
+
+#### Deploy an Azure Firewall implementation
+
+One way you can control outbound network access from an Azure subnet is with Azure Firewall. With Azure Firewall,
+you can configure:
+
+- Application rules that define fully qualified domain names (FQDNs) that can be accessed from a subnet.
+- Network rules that define source address, protocol, destination port, and destination address.
+
+![az500-firewall-2](../assets/azure/az500-firewall-2.png)
+
+An FQDN tag represents a group of fully qualified domain names (FQDNs) associated with well known Microsoft services.
+You can use an FQDN tag in application rules to allow the required outbound network traffic through your firewall.
+
+For example, to manually allow Windows Update network traffic through your firewall, you need to create multiple application
+rules per the Microsoft documentation. Using FQDN tags, you can create an application rule, include the Windows Updates
+tag, and now network traffic to Microsoft Windows Update endpoints can flow through your firewall.
+
+- Logs and metrics: You can access some of these logs through the portal. Logs can be sent to Azure Monitor logs,
+Storage, and Event Hubs and analyzed in Azure Monitor logs or by different tools such as Excel and Power BI.
+- Threat intelligence-based filtering: Threat intelligence-based filtering can be enabled for your firewall to alert
+and deny traffic from/to known malicious IP addresses and domains. The IP addresses and domains are sourced from the
+Microsoft Threat Intelligence feed. Intelligent Security Graph powers Microsoft threat intelligence and is used by multiple
+services including Microsoft Defender for Cloud.
+- Rule processing logic: You can configure NAT rules, network rules, and applications rules on Azure Firewall. Rule
+collections are processed according to the rule type in priority order, lower numbers to higher numbers from 100 to 65,000.
+- Service tags: A service tag represents a group of IP address prefixes to help minimize complexity for security rule
+creation. You cannot create your own service tag, nor specify which IP addresses are included within a tag. Microsoft
+manages the address prefixes encompassed by the service tag, and automatically updates the service tag as addresses change.
+
+#### Configure VPN forced tunneling
+
+A virtual private network (VPN) consists of remote peers sending private data securely to one another over an unsecured
+network, such as the Internet. This is called Internet tunneling. Site-to-site (S2S) VPNs use tunnels to encapsulate data
+packets within normal IP packets for forwarding over IP-based networks, using encryption to ensure privacy and authentication
+to ensure integrity of data.
+
+Forced tunneling lets you redirect, or force, all internet-bound traffic back to your on-premises location via a site-to-site
+VPN tunnel for inspection and auditing. This is a critical security requirement for most enterprise IT policies. Without
+forced tunneling, internet-bound traffic from your VMs in Azure always traverses from the Azure network infrastructure
+directly to the internet—without the option to allow you to inspect or audit the traffic. Unauthorized internet access
+potentially leads to information disclosure or other types of security breaches.
+
+![az500-virtual-private-network-tunnel](../assets/azure/az500-virtual-private-network-tunnel.png)
+
+The workloads in the front-end subnet can continue to accept and respond to customer requests that come directly from
+the internet. The mid-tier and back-end subnets use forced tunneling. Any outbound connections from these two subnets to
+the internet are forced back to an on-premises site via one of the S2S VPN tunnels.
+
+#### Create User Defined Routes and Network Virtual Appliances
+
+**User Defined Routes:** A User Defined Routes (UDR) is a custom route in Azure that overrides Azure's default system
+routes or adds routes to a subnet's route table. In Azure, you create a route table and then associate that route table
+with zero or more virtual network subnets. Each subnet can have zero or one route table associated with it. If you create
+a route table and associate it to a subnet, Azure either combines its routes with the default routes that Azure adds to 
+a subnet or overrides those default routes.
+
+![az500-network-virtual-appliance-1](../assets/azure/az500-network-virtual-appliance-1.png)
+
+**Network Virtual Appliances:** The NVA helps provide a secure network boundary by checking all inbound and outbound
+network traffic and then passing only the traffic that meets the network security rules. However, the fact that all network
+traffic passes through the NVA means that the NVA is a single point of failure in the network. If the NVA fails, no other
+path will exist for network traffic, and all the back-end subnets will become unavailable.
+
+To make an NVA highly available, deploy more than one NVA into an availability set.
+
+![az500-network-virtual-appliance-2](../assets/azure/az500-network-virtual-appliance-2.png)
+
+UDRs and NSGs help provide layer 3 and layer 4 (of the OSI model) security. NVAs help provide layer 7, application layer,
+security.
+
+#### Hub and spoke topology
+
+The hub is a virtual network in Azure that acts as a central point of connectivity to your on-premises network. The spokes
+are virtual networks that peer with the hub and can be used to isolate workloads. Traffic flows between the on-premises
+datacenter and the hub through an ExpressRoute or VPN gateway connection.
+
+![az500-hub-spoke](../assets/azure/az500-hub-spoke.png)
+
+The architecture consists of the following components:
+
+- On-premises network
+- VPN device: may be a hardware device or a software solution such as the Routing and Remote Access Service (RRAS)
+- VPN virtual network gateway or ExpressRoute gateway: enables the virtual network to connect to the VPN device, or
+ExpressRoute circuit, used for connectivity with your on-premises network.
+- Hub virtual network: entral point of connectivity to your on-premises network, and a place to host services that can
+be consumed by the different workloads hosted in the spoke virtual networks.
+- Gateway subnet
+- Spoke virtual networks
+- Virtual network peering: Two virtual networks can be connected using a peering connection. Peering connections are
+non-transitive, low latency connections between virtual networks.
+
+### Configure network security
+
+In Azure you can use tools such as Bastion, ExpressRoute & Front Door to lock down the network layer to attacks.
+
+A security engineer will conduct the following task:
+
+- Setup network security groups (NSGs) and Application Security Group (ASGs)
+- Deploy Service Endpoints and Private Links
+- Configure Front Door and ExpressRoute
+- Configure Web App Firewalls (WAFs)
+- Secure the connectivity of virtual networks (VPN authentication, ExpressRoute encryption)
+
+#### Network security groups (NSGs)
+
+Traffic to and from ressources can be controlled using NSGs which contains security rules. There are defaults that can't
+be delete but can be overriden. Each rule is based on a source IP address, a source port, a destination IP address, and
+a destination port.
+
+- You can apply only one NSG to a VM, subnet, or network adapter.
+- You can apply an NSG to multiple resources.
+- You can have up to 200 rules in a single NSG
+- NSGs can be applied to both a VM's network adapater as well as the subnet
+- The order in which the rules are evaluated depends on the traffic direction.
+  - Outbout traffic is evaluated from outer to innter (subnet first and then the VM's network interface)
+  - Vice-versa for inbound traffic
+
+![az500-network-security-group-2](../assets/azure/az500-network-security-group-2.png)
+
+It is a best practice to only add NSGs to either the subnet or the network interface but not both as it can cause issues
+if the rules conflict at different levels.
+
+#### Service Endpoints
+
+A vNet's service endpoint provides the identity of your vNet to Azure services. Once enbaled youn can secure the Azure
+service ressources to your virtual network by adding a virtual network rule to the ressource.
+
+Instead of using you vNet's public IP as the source IP you can instead use the private IP addresse when accessing a service
+from a vNet. This removes the need for reserved public IP addresses used in IP firewalls.
+
+A common usage case for service endpoints is a virtual machine accessing storage. The storage account restricts access
+to the virtual machines private IP address.
+
+![az500-service-endpoints](../assets/azure/az500-service-endpoints.png)
+
+#### Private links
+
+Azure private link work on an approval call model where teh service consumer will request a connection to the service
+which in turn will decide wether to approve or deny the request.
+
+The requests can be approved automatically using RBAC, or manually.
+
+![az500-private-links](../assets/azure/az500-private-links.png)
+
+#### Azure application gateway
+
+Application gateways are web traffic load balancers. Unlike regular load balancers that operate on the transport layer
+(OSI layer 4), application gateways can make use of additional attributes from http requests (URI, headers ...)
+
+They include the following features:
+
+- Secure Sockets Layer (SSL/TLS) termination - Application gateway supports SSL/TLS termination at the gateway,
+after which traffic typically flows unencrypted to the backend servers. This feature allows web servers to be unburdened
+from costly encryption and decryption overhead.
+- URL-based routing
+- Ingress Controller for AKS - Application Gateway Ingress Controller (AGIC) allows you to use Application Gateway as
+the ingress for an Azure Kubernetes Service (AKS) cluster.
+
+#### Azure front door
+
+Azure Front Door enables you to define, manage, and monitor the global routing for your web traffic by optimizing for
+best performance and instant global failover for high availability.
+
+Front Door works at Layer 7 or HTTP/HTTPS layer and uses split TCP-based anycast protocol. Front Door ensures that your
+end users promptly connect to the nearest Front Door POP (Point of Presence).
+
+![az500-front-door](../assets/azure/az500-front-door.png)
+
+#### ExpressRoute
+
+ExpressRoute is a direct, private connection from your WAN (not over the public Internet) to Microsoft Services,
+including Azure. Site-to-Site VPN traffic travels encrypted over the public Internet. Being able to configure
+Site-to-Site VPN and ExpressRoute connections for the same virtual network has several advantages
+
+![az500-virtual-private-network-gateways](../assets/azure/az500-virtual-private-network-gateways.png)
+
+Encryption can be done in several ways:
+
+- IPsec over ExpressRoute for Virtual WAN
+  - Azure Virtual WAN uses an Internet Protocol Security (IPsec) Internet Key Exchange (IKE) VPN connection from your
+  on-premises network to Azure over the private peering of an Azure ExpressRoute circuit.
+- Point-to-point encryption by MACsec
+  - MACsec is an IEEE standard. It encrypts data at the Media Access control (MAC) level or Network Layer 2.
+- End-to-end encryption by IPsec and MACsec
+  - IPsec is an IETF standard. It encrypts data at the Internet Protocol (IP) level or Network Layer 3.
 
 ## [AZ-500: Secure your data and applications](https://learn.microsoft.com/en-us/training/paths/secure-your-data-applications/)
 
@@ -357,5 +832,7 @@ Conditional access conditions are configured in the portal through Azure Active 
 # Service Bus
 
 ## *What is azure service bus?*
+
+[Azure Service Bus (ASB) Python SDK Docs](https://learn.microsoft.com/en-us/python/api/overview/azure/service-bus?view=azure-python)
 
 ## *How do message sessions work in azure service bus?*

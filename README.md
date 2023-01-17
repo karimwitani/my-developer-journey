@@ -8,3 +8,4 @@ becoming a software engineer.
 - [Databases](notebooks/databases.md)
 - [Microsoft Azure](notebooks/microsoft_azure.md)
 - [Python](notebooks/python.md)
+- [Linux](notebooks/linux.md)
