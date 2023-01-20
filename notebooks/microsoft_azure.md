@@ -52,6 +52,12 @@
       - [Azure application gateway](#azure-application-gateway)
       - [Azure front door](#azure-front-door)
       - [ExpressRoute](#expressroute)
+    - [configure network security](#configure-network-security-1)
+    - [Enable Container Security](#enable-container-security)
+      - [Configuring Azure Container Security](#configuring-azure-container-security)
+      - [Azure Container Instances (ACI)](#azure-container-instances-aci)
+      - [Azure Container Registery](#azure-container-registery)
+      - [Enabling Azure Container Registry Authentication](#enabling-azure-container-registry-authentication)
   - [AZ-500: Secure your data and applications](#az-500-secure-your-data-and-applications)
   - [AZ-500: Manage security operation](#az-500-manage-security-operation)
 - [Microsoft Certified: Cybersecurity Architect Expert link](#microsoft-certified-cybersecurity-architect-expert-link)
@@ -822,6 +828,83 @@ Encryption can be done in several ways:
   - MACsec is an IEEE standard. It encrypts data at the Media Access control (MAC) level or Network Layer 2.
 - End-to-end encryption by IPsec and MACsec
   - IPsec is an IETF standard. It encrypts data at the Internet Protocol (IP) level or Network Layer 3.
+
+### configure network security
+
+### Enable Container Security
+
+Containers are isolated silos that use the host's operating system's kernel to run. They are isolated from the surrounding
+environment and do not persist data after a container unless they are using mounted persistent storage. They use the Docker
+engine to start and manage the containers.
+
+![az500-docker](../assets/azure/az500-docker.png)
+
+#### Configuring Azure Container Security
+
+- Use a private registry
+  - Containers are built from image layers that are "stacked" onto each other
+  - The repositories for images can be public, such as Docker Hub. However for security images should be stored on private
+  repositories (such as Docker Trusted Registry or Azure Container Registry)
+  - These registries support RBAC (role based access controle) and in the case of Azure Container Registry, authentication
+  flow using Azure Active Directory.
+- Monitor and scan container images continuously
+  - Microsoft Defender automatically scans all images in the registry, it intergrates Qualys scanner to detect image vulnerabilities
+  and provide remidiation steps.
+- Protect credentials
+  - Tokens, passwords and secrets should be stored in appropriate encrypted databases, TLS encryption for secrets in transit
+  and least-privilege role-based access control.
+- Enforce least privileges at runtime
+  - When an attacker compromises an application they gain as much access as the compromised application which is why its
+  important to reduce exposure
+- Log all container admin user access for auditing
+
+#### Azure Container Instances (ACI)
+
+ACI is a PaaS for scenarios that can oeprate in isolted containers (simple apps, task automation, build jobs) and do not
+require. If full container orchestration is needed then Azure Kubernetes Service is required (AKS)
+
+Features of ACI:
+
+- Fast startup time
+- Custom sizes: specify the CPU cores needed and memory
+- Persistent storage: Using mounted Azure File Shares backed by Azure Storage
+- Flexible billing: Per second/GB/CPU billing
+- Co-scheduled groups: schedule multi-container groups that share a host machine, network, storage and lifecycle.
+- Virtual network deployement: containers can securely communicate with other ressources on a network (including on-prem
+  using VPN gateway or ExpressRoute)
+
+#### Azure Container Registery
+
+![az500-azure-container-registry](../assets/azure/az500-azure-container-registry.png)
+
+- Registry security
+  - Login using Azure CLI or Docker CLI
+  - Image transfer over HTPPS and TLS to secure client connections
+  - Access using an Azure identity or Active Directory backed service principal
+- Premium ACR sku features
+  - content trust for image tag signing, firewalls and virtual networks to restrict access to registries
+  - Azure Defender to scan images for vulnerabilities
+
+Registries contain one or more repositories which are collections of artifact with the same name but differenct tags
+such as:
+
+- acr-helloworld:latest
+- acr-helloworld:v1
+- acr-helloworld:v2
+
+Each artifact (image) is composed of one or more layer which are identified in the image's manifest. Each layer is set of
+commands (called stanzas) in the image's Dockerfile
+
+Container monitoring using log analytics provides the following:
+
+- Detailed reports on the command used with the containers
+- Centralized view of all the logs across containers
+- Identify noisy and ressource intensive containers
+- Centralised view of CPU, memory, storage and network usage
+
+#### Enabling Azure Container Registry Authentication
+
+
 
 ## [AZ-500: Secure your data and applications](https://learn.microsoft.com/en-us/training/paths/secure-your-data-applications/)
 
