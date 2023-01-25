@@ -58,6 +58,16 @@
       - [Azure Container Instances (ACI)](#azure-container-instances-aci)
       - [Azure Container Registery](#azure-container-registery)
       - [Enabling Azure Container Registry Authentication](#enabling-azure-container-registry-authentication)
+      - [Azure Kubernetes Service (AKS)](#azure-kubernetes-service-aks)
+      - [Azure Kubernetes Service architecture](#azure-kubernetes-service-architecture)
+        - [AKS Terminology](#aks-terminology)
+        - [Master security](#master-security)
+        - [Node security](#node-security)
+      - [Configure Azure Kubernetes Service networking](#configure-azure-kubernetes-service-networking)
+        - [Services](#services)
+      - [Deploy Azure Kubernetes Service storage](#deploy-azure-kubernetes-service-storage)
+      - [Secure authentication to Azure Kubernetes Service with Active Directory](#secure-authentication-to-azure-kubernetes-service-with-active-directory)
+      - [Role-based access controls](#role-based-access-controls)
   - [AZ-500: Secure your data and applications](#az-500-secure-your-data-and-applications)
   - [AZ-500: Manage security operation](#az-500-manage-security-operation)
 - [Microsoft Certified: Cybersecurity Architect Expert link](#microsoft-certified-cybersecurity-architect-expert-link)
@@ -904,7 +914,162 @@ Container monitoring using log analytics provides the following:
 
 #### Enabling Azure Container Registry Authentication
 
+There are three ways to authenitcate with Azure Container Registries
 
+- Individual login with Azure AD
+  - using the azure cli you can login directly and a token will be created for your session which will be cached and used
+  by the Docker Engine that is running in your environment (by setting it in the docker.config file). This option is uselful
+  for development purposes while pushing/pulling images.
+- Service Principals
+  - By assigning a service principal to an application/service will alow for headless authentication and role based access
+  to the registry. This will allow you apps to ustilize/access the registry when deploying.
+  - The roles available are AcrPull: pull, AcrPush: pull and push, Owner: pull, push, and assign roles to other users
+- Admin accounts
+  - Each registry has an admin account that is disabled by default. If enabled they have two passowrds that can be used
+  similarly to Azure AD logins from the CLI. Either of the passwords can be used and both can be regenerated.
+
+#### Azure Kubernetes Service (AKS)
+
+App developement is moving towards containarisation which exposed the needs to orchesrate multiple containers in a fault
+tolerant way. Kubernetes is the industry standard and AKS is Azure's version of it. It manages the networking and storage
+component of multi-cotainer app architectures.
+
+AKS is split into two components:
+
+- Control plane nodes that provide the core kubernetes functionalities
+- The application nodes that you run your workloads on
+
+![az500-kubernetes-cluster](../assets/azure/az500-kubernetes-cluster.png)
+
+Features of AKS include:
+
+- Fully managed
+- Public IP and FQDN (Private IP option)
+- Accessed with RBAC or Azure AD
+- Deployment of containers
+- Dynamic scale containers
+- Automation of rolling updates and rollbacks of containers
+- Management of storage, network traffic, and sensitive information
+
+#### Azure Kubernetes Service architecture
+
+AKS architecture is a set of reccomendation to deploy secure container based apps
+
+Cluster master:
+
+An Azure ressource that is created at the same time of the creation of an AKS cluster. It includes the following core
+kubernetes components:
+
+- kube-apiserver: It exposes the undeleying API and provides the interaction with the management tools such as **kubectl**
+and the Kubernetes dashboard
+- etcd: a highly available key-value store that is used as a cache for configuration and state of the cluster
+- kube-scheduler: determines which nodes can start which applications and when
+- kube-controller-manager: manages a number of smaller controllers that handle pod replication and node operations.
+
+![az500-kubernetes-cluster-1](../assets/azure/az500-kubernetes-cluster-1.png)
+
+The VM of the node will decide the CPU/Storage/Memory availble and you need to plan out accordingly. The nodes can be scaled
+out horizontally to meet demand. AKS VM can either use Ubuntu linux or Windows Server 2019
+
+##### AKS Terminology
+
+| Term       | Description                                                              |
+| ---------- | ------------------------------------------------------------------------ |
+| Pools      | Group of nodes with identical configuration                              |
+| Node       | Individual VM running containerized applications                         |
+| Pods       | Single instance of an application. A pod can contain multiple containers |
+| Deployment | One or more identical pods managed by Kubernetes                         |
+| Manifest   | YAML file describing a deployment                                        |
+
+##### Master security
+
+The Kubernetes API server uses a public IP address and a fully qualified domain name (FQDN). You can control access to
+the API server using Kubernetes role-based access controls and Azure Active Directory.
+
+##### Node security
+
+Azure nodes that are run on Ubuntu get secturity patches applied on a nightly basis however Microsoft does not and requires
+manual upgrades.
+
+Pod Security Policies or more fine-grained role-based access controls (RBAC) for nodes make exploits more difficult.
+However, for true security when running hostile multi-tenant workloads, a hypervisor is the only level of security that
+you should trust. The security domain for Kubernetes becomes the entire cluster, not an individual node.
+
+#### Configure Azure Kubernetes Service networking
+
+Kubernetes provides an abstraction layer to virtual networking. The nodes are connected to a virtual network and provide
+inbound/outbound connectivity for pods. This is accomplished using the kube-proxy component that runs on each node.
+
+Services logically group pods to allow access via direct IP or DNS name with a specific port. Load balancer can be used
+distribute traffic and Ingress Controllers can be used to configure more complex routing.
+
+Security and filtering of traffice is achieved using Kubernetes network policies.
+
+##### Services
+
+- ClusterIP
+  - Internal IP address to be used to internal-only applications.
+- NodePort
+  - Create a port mapping for the Node to be accessed through IP/Port combination
+- Load Balancer
+  - Configures an external IP address, and connects the requested pods to the load balancer backend pool
+- ExternalName
+  - Creates a specific DNS entry for easier application access.
+
+![az500-kubernetes-networking](../assets/azure/az500-kubernetes-networking.png)
+
+#### Deploy Azure Kubernetes Service storage
+
+Pods are ephemeral ressources and application may need to persist data accross pods being scheduled of instanciated on new
+nodes.
+
+![az500-kubernetes-storage-1](../assets/azure/az500-kubernetes-storage-1.png)
+
+Volumes are used to attach persistent storage to pods:
+
+- Azure Disks: Disks can use Azure Premium storage, backed by high-performance SSDs, or Azure Standard storage, backed
+by regular HDDs. However they are only accessible to only one pod at a time. In case data needs to be shared by multiple
+nodes, use Azure Files.
+- Azure Files: SMB 3.0 shares backed by an Azure Storage account to pods
+
+Storage classes are used to define the storage type as well as the reclaim policy for a pod (they define how the underlying
+storage ressources are managed upon pod delete/move)
+
+There are two type of StorageClasses:
+
+- default - Uses Azure Standard storage to create a Managed Disk. The reclaim policy indicates that the underlying Azure
+Disk is deleted when the persistent volume that used it is deleted.
+- managed-premium - Uses Azure Premium storage to create Managed Disk. The reclaim policy again indicates that the underlying
+Azure Disk is deleted when the persistent volume that used it is deleted.
+
+#### Secure authentication to Azure Kubernetes Service with Active Directory
+
+Service accounts: One of the primary user types in Kubernetes is a service account. A service account exists in, and is
+managed by, the Kubernetes API. The credentials for service accounts are stored as Kubernetes secrets, which allows them
+to be used by authorized pods to communicate with the API Server. Most API requests provide an authentication token for
+a service account or a normal user account.
+
+Azure Active Directory integration: With Azure AD, you can integrate on-premises identities into AKS clusters to provide
+a single source for account management and security. You can grant users or groups access to Kubernetes resources within
+a namespace or across the cluster. To obtain a kubectl configuration context, a user can run the az aks get-credentials
+command. When a user then interacts with the AKS cluster with kubectl, they are prompted to sign in with their Azure AD
+credentials. Azure AD authentication in AKS clusters uses OpenID Connect.
+
+#### Role-based access controls
+
+Roles and ClusterRoles: Roles are used to grant permissions within a namespace. If you need to grant permissions across
+the entire cluster, or to cluster resources outside a given namespace, you can instead use ClusterRoles.
+
+RoleBindings and ClusterRoleBindings: Once roles are defined to grant permissions to resources, you assign those Kubernetes
+RBAC permissions with a RoleBinding. If your AKS cluster integrates with Azure Active Directory, bindings are how those
+Azure AD users are granted permissions to perform actions within the cluster.
+
+Kubernetes Secrets: A Kubernetes Secret is used to inject sensitive data into pods, such as access credentials or keys.
+You first create a Secret using the Kubernetes API. When you define your pod or deployment, a specific Secret can be requested.
+Secrets are only provided to nodes that have a scheduled pod that requires it, and the Secret is stored in tmpfs, not
+written to disk. The use of Secrets reduces the sensitive information that is defined in the pod or service YAML manifest.
+
+[Lesson Summary](https://learn.microsoft.com/en-ca/training/modules/enable-containers-security/14-summary)
 
 ## [AZ-500: Secure your data and applications](https://learn.microsoft.com/en-us/training/paths/secure-your-data-applications/)
 
