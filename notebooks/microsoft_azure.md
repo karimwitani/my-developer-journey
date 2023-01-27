@@ -69,6 +69,14 @@
       - [Secure authentication to Azure Kubernetes Service with Active Directory](#secure-authentication-to-azure-kubernetes-service-with-active-directory)
       - [Role-based access controls](#role-based-access-controls)
   - [AZ-500: Secure your data and applications](#az-500-secure-your-data-and-applications)
+    - [Deploy and secure Azure Key Vault](#deploy-and-secure-azure-key-vault)
+      - [Configuring Key Vault Access](#configuring-key-vault-access)
+      - [Deploying and managing Key Vault certificates](#deploying-and-managing-key-vault-certificates)
+      - [Creating Key Vault keys](#creating-key-vault-keys)
+      - [Managing customer managed keys](#managing-customer-managed-keys)
+      - [Enabling Key Vault secrets](#enabling-key-vault-secrets)
+      - [Configure key rotation](#configure-key-rotation)
+      - [Managing Key Vault safety and recovery features](#managing-key-vault-safety-and-recovery-features)
   - [AZ-500: Manage security operation](#az-500-manage-security-operation)
 - [Microsoft Certified: Cybersecurity Architect Expert link](#microsoft-certified-cybersecurity-architect-expert-link)
 - [Service Bus](#service-bus)
@@ -1072,6 +1080,169 @@ written to disk. The use of Secrets reduces the sensitive information that is de
 [Lesson Summary](https://learn.microsoft.com/en-ca/training/modules/enable-containers-security/14-summary)
 
 ## [AZ-500: Secure your data and applications](https://learn.microsoft.com/en-us/training/paths/secure-your-data-applications/)
+
+### [Deploy and secure Azure Key Vault](https://learn.microsoft.com/en-ca/training/modules/azure-key-vault/)
+
+A security engineer needs to be able to protect an organization keys/secrets/certificates. Theyre expected to:
+
+- Deploy and manage key vaults
+- Design a strategy for backups/key rotations/other protections
+
+Azure Key Vault allows security admin to create/manage/protect cryptographic keys and certificates that are used to
+encrypt and access data in Azure ressources.
+
+<!-- markdownlint-disable MD013 -->
+| Best Practice                                                             | Solution                                                                                                                                                                                                                                                                         |
+| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Grant access at specific scopes                                           | Use RBAC's predefined roles. The scope can be subscription, a resource group, or just a specific key vault.                                                                                                                                                                      |
+| Control what users have access to                                         | Access is controlled via two independant planes, management and data. If an applcation needs access to the keys in a vault you will provide access to the data plane, if a user needs access to read teh properties/tags of a vault you'd provide access to the management plane |
+| Ensure that you can recover a deletion of key vaults or key vault objects | Enable the soft delete and purge protection features of Key Vault to protect against inavertant or malicious actions                                                                                                                                                             |
+
+<!-- markdownlint-enable MD013 -->
+
+**If a user has contributor permissions (RBAC) to a key vault management plane, they can grant themselves access to the
+data plane by setting a key vault access policy. It's recommended that tightls control are set on who has contributor
+access to key vaults**
+
+#### Configuring Key Vault Access
+
+Access to key vaults is done via two interfaces, the management plane and the data plane
+
+- Management plane: you create/delete vaults, access key vault properties, create/update access policies
+- Data plane: you create/update/deletes keys and certificates
+
+![az500-key-vault-access](../assets/azure/az500-key-vault-access.png)
+
+Active Directory authentication
+
+- User plus application access: The application access key vault on behalf of the user (such as Azure PowerShell and Azure
+  Portal). They can either access through any application or a spefic applicaiton (aka compound identity)
+- Application-only access. The application runs as a daemon service or background job. The application identity is granted
+access to the key vault.
+
+For both types the application authenticates with Azure AD and obtains a token from the plane to get access.
+
+#### Deploying and managing Key Vault certificates
+
+When a ceritificate is created an addressable key and secret are also created. The key allows key operations and the secret
+allows retrieval of the certificate value as a secret. A Key Vault certificate also contains public x509 certificate metadata.
+
+![az500-key-vault-certificates](../assets/azure/az500-key-vault-certificates.png)
+
+When a Key Vault certificate is created, it can be retrieved from the addressable secret with the private key in either
+PFX or PEM format. However, the policy used to create the certificate must indicate that the key is exportable.
+
+A certificate policy contains information on how to create and manage the Key Vault certificate lifecycle. When a
+certificate with private key is imported into the Key Vault, a default policy is created by reading the x509 certificate.
+
+A certificate policy contains the following information:
+
+- X509 certificate properties. Contains subject name, subject alternate names, and other properties used to create an
+  x509 certificate request.
+
+- Key Properties. Contains key type, key length, exportable, and reuse key fields. These fields instruct key vault on
+  how to generate a key.
+
+- Secret properties. Contains secret properties such as content type of addressable secret to generate the secret value,
+  for retrieving certificate as a secret.
+
+- Lifetime Actions. Contains lifetime actions for the Key Vault certificate. Each lifetime action contains:
+
+- Trigger, which specifies via days before expiry or lifetime span percentage.
+
+- Action, which specifies the action type: emailContacts, or autoRenew.
+
+- Issuer: Contains the parameters about the certificate issuer to use to issue x509 certificates.
+
+- Policy attributes: Contains attributes associated with the policy.
+
+#### Creating Key Vault keys
+
+Keys are represented as JSON Web Key (JWK) objects. They can be either **soft keys** or **hard keys**
+
+- Soft Keys: processed in software by Key Vault, but is encrypted at rest using a system key that is in an Hardware Security
+  Module (HSM). Clients may import an existing RSA or EC (Elliptic Curve) key, or request that Key Vault generate one.
+- Hard Keys: A key processed in an HSM (Hardware Security Module). These keys are protected in one of the Key Vault HSM
+  Security Worlds (there's one Security World per geography to maintain isolation).
+
+Key operations
+
+- Create: The value of the key is generated by Key Vault and stored, and isn't released to the client.
+- Import: Import an existing key to Key Vault. Asymmetric keys can be imported to Key Vault using different packaging 
+  methods within a JWK construct.
+- Update: Users with sufficient permissions can modify the metadata (key attributes) of a key.
+- Delete: Users with sufficient permissions can delete a key from Key Vault
+
+Cryptographic operations
+
+- Sign and Verify: Strictly, this operation is "sign hash" or "verify hash", as Key Vault doesn't support hashing of
+  content as part of signature creation. Applications should hash the data to be signed locally, then request that Key
+  Vault sign the hash.
+- Key Encryption / Wrapping: A key stored in Key Vault may be used to protect another key, typically a symmetric content
+  encryption key (CEK). When the key in Key Vault is asymmetric, key encryption is used. When the key in Key Vault is
+  symmetric, key wrapping is used.
+- Encrypt and Decrypt: A key stored in Key Vault may be used to encrypt or decrypt a single block of data. The size of
+  the block is determined by the key type and selected encryption algorithm.
+
+Apps hosted in App Service and Azure Functions can now simply define a reference to a secret managed in Key Vault as part
+of their application settings. The app’s system-assigned identity is used to securely fetch the secret and make it available
+to the app as an environment variable.
+
+#### Managing customer managed keys
+
+Secrets can be rotated in several ways:
+
+- As part of a manual process
+- Programmatically by using REST API calls
+- Through an Azure Automation script
+
+![az500-customer-keys](../assets/azure/az500-customer-keys.png)
+
+Customers can rotate their key in Azure Key Vault as per their compliance policies. When they rotate their key, Azure
+Storage detects the new key version and re-encrypts the Account Encryption Key for that storage account. Key rotation
+does not result in re-encryption of all data and there is no other action required from user.
+
+#### Enabling Key Vault secrets
+
+Key Vault provides secure storage of secrets, such as passwords and database connection strings. From a developer's perspective,
+Key Vault APIs accept and return secret values as strings. Internally, Key Vault stores and manages secrets as sequences
+of octets (8-bit bytes), with a maximum size of 25k bytes each.
+
+The values for Key Vault Secrets are:
+
+- Name-value pair - Name must be unique in the Vault
+- Value can be any UTF-8 string - max of 25 KB in size
+- Manual or certificate creation
+- Activation date
+- Expiration date
+
+Azure Key Vault service encrypts your secrets when you add them, and decrypts them automatically when you read them.
+The encryption key is unique to each key vault.
+
+#### Configure key rotation
+
+![az500-key-vault-rotation](../assets/azure/az500-key-vault-rotation.png)
+
+- Thirty days before the expiration date of a secret, Key Vault publishes the "near expiry" event to Event Grid.
+- Event Grid checks the event subscriptions and uses HTTP POST to call the function app endpoint subscribed to the event.
+- The function app receives the secret information, generates a new random password, and creates a new version for the
+  secret with the new password in Key Vault.
+- The function app updates SQL Server with the new password.
+
+#### Managing Key Vault safety and recovery features
+
+There are two primary ways of recovering keys:
+
+Azure Key Vault Soft-delete
+  
+![az500-key-vault-soft-delete](../assets/azure/az500-key-vault-soft-delete.png)
+
+Key Vault Backup, intended to provide you with an offline copy of all your secrets in the unlikely event that you lose
+access to your key vault.
+
+![az500-key-vault-backup-key](../assets/azure/az500-key-vault-backup-key.png)
+
+[Module Summary](https://learn.microsoft.com/en-ca/training/modules/azure-key-vault/14-summary)
 
 ## [AZ-500: Manage security operation](https://learn.microsoft.com/en-us/training/paths/manage-security-operation/)
 
