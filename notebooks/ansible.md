@@ -152,4 +152,16 @@ root@ansible-vm-1:~# tree
 │       │   └── test.yml
 │       └── vars
 │           └── main.yml
+[ansible_architecture](../assets/ansible/ansible_architecture.png)
+
+- How does variable interpolation work in ansible?
+  - Through the jinja template style of {{ variable_name }}
+- How to run tasks conditionally?
+  - We use the "when" field in the task
+
+```yml
+tasks:
+  - name: "shut down Debian flavoured systems"
+    command: /sbin/shutdown -t now
+    when: ansible_os_family == "Debian"
 ```
