@@ -87,4 +87,16 @@ hostname.domain.com
   - invetory, a list of nodes to control
   - each node is connected to via ssh clients
 
-![ansible_architecture](../assets/ansible/ansible_architecture.png)
+[ansible_architecture](../assets/ansible/ansible_architecture.png)
+
+- How does variable interpolation work in ansible?
+  - Through the jinja template style of {{ variable_name }}
+- How to run tasks conditionally?
+  - We use the "when" field in the task
+
+```yml
+tasks:
+  - name: "shut down Debian flavoured systems"
+    command: /sbin/shutdown -t now
+    when: ansible_os_family == "Debian"
+```
