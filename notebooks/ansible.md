@@ -10,6 +10,8 @@
   - on most UNIX style machines you can install ansbile from pypi. However on some distributions you can use other package
   managers
 
+![Ansible Official Docs](https://docs.ansible.com/ansible/latest/index.html)
+
 ```shell
 # Most scenarios
 python3 -m pip install --user ansible
@@ -52,9 +54,23 @@ sudo apt install ansible
 ```
 
 - how do you check the syntax of a playbook?
-  - ansible-playbook sample.yml --syntax-check
+
+```shell
+ansible-playbook sample.yml --syntax-check
+```
+
+- how to run a specific command on nodes?
+
+```shell
+ansible linux -a "cat /etc/os-release"
+```
+
 - how do you run a playbook?
-  - ansible-playbook sample.yml
+
+```shell
+ansible-playbook sample.yml
+```
+
 - what are the common tasks that can be accomplished with ansible?
 - how are the benefits of ansible measure?
 - how does ansible communicate with the nodes from the master?
@@ -88,3 +104,52 @@ hostname.domain.com
   - each node is connected to via ssh clients
 
 ![ansible_architecture](../assets/ansible/ansible_architecture.png)
+
+## Ansible Playbooks
+
+- A playbook enables us to take our group of servers and perform configuration and installation tasks against that group
+- Their structure looks like the following: Playbook > Plays > Tasks
+- They're written in YAML format
+
+```yaml
+- name: Simple Play
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Ping me
+      ping:
+    - name: print os
+      debug:
+        msg: "{{ ansible_os_family }}"
+```
+
+### Ansible Galaxy and roles
+
+roles are used to group different groups of assets into categories that are similar and share common tasks (webservers/loadbalanceers...)
+
+This is done using the ansible-galaxy command which created a file structure that will house the different yaml files:
+
+```shell
+root@ansible-vm-1:~# ansible-galaxy init roles/webservers
+- Role roles/webservers was created successfully
+root@ansible-vm-1:~# tree
+├── playbook.yml
+├── roles
+│   └── webservers
+│       ├── README.md
+│       ├── defaults
+│       │   └── main.yml
+│       ├── files
+│       ├── handlers
+│       │   └── main.yml
+│       ├── meta
+│       │   └── main.yml
+│       ├── tasks
+│       │   └── main.yml
+│       ├── templates
+│       ├── tests
+│       │   ├── inventory
+│       │   └── test.yml
+│       └── vars
+│           └── main.yml
+```
