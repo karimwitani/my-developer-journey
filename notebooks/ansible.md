@@ -152,6 +152,7 @@ root@ansible-vm-1:~# tree
 │       │   └── test.yml
 │       └── vars
 │           └── main.yml
+
 [ansible_architecture](../assets/ansible/ansible_architecture.png)
 
 - How does variable interpolation work in ansible?
@@ -164,4 +165,171 @@ tasks:
   - name: "shut down Debian flavoured systems"
     command: /sbin/shutdown -t now
     when: ansible_os_family == "Debian"
+```
+
+- what is the difference between handlers and tasks in ansible?
+  - handlers are just a special type of task that only run when they are triggered by the "notified" directive
+  - in the below example you can see that the ansible playbook only runs a task to write to teh index.html file if
+  the apache service got restarted
+
+```yaml
+- name: write a basic index.html file
+  template:
+    src: templates/index.html.j2
+    dest: /var/www/html/index.html
+  notify:
+  - restart apache
+```
+
+### How to tydi up a playbook
+
+You can split a playbook into folders for handlers, tasks and templates and have it reference yaml files in those
+folder that will contain the various components of the playbook.
+
+The below structure is a usefull example.
+
+```shell
+root@ansible-vm-1:~/ansible_sandbox/scenario2# tree
+.
+├── handlers
+│   └── main.yml
+├── playbook2.yml
+├── tasks
+│   └── apache2_install.yml
+└── templates
+    ├── index.html.j2
+    └── ports.conf.j2
+
+3 directories, 5 files
+```
+
+The playbook2.yml file would import tasks using the below syntax:
+
+```yaml
+- hosts: linux
+  become: yes
+  vars:
+    http_port: 8000
+    https_port: 4443
+    html_welcome_msg: "Hello 90DaysOfDevOps - Welcome to Day 66!"
+  tasks:
+  - import_tasks: tasks/apache2_install.yml
+
+  handlers:
+  - import_tasks: handlers/main.yml
+```
+
+## Ansible Galaxy
+
+In scanrios where we have more specific functions for each server (loadbalancer, database servers...) we can use
+ansible-galaxy to create roles and manage them in shared repositories
+
+```shell
+root@ansible-vm-1:~/ansible_sandbox/scenario3# ansible-galaxy init roles/apache2
+- Role roles/apache2 was created successfully
+root@ansible-vm-1:~/ansible_sandbox/scenario3# tree
+.
+└── roles
+    └── apache2
+        ├── README.md
+        ├── defaults
+        │   └── main.yml
+        ├── files
+        ├── handlers
+        │   └── main.yml
+        ├── meta
+        │   └── main.yml
+        ├── tasks
+        │   └── main.yml
+        ├── templates
+        ├── tests
+        │   ├── inventory
+        │   └── test.yml
+        └── vars
+            └── main.yml
+
+10 directories, 8 files
+```
+
+The playbook will import the roles instead of the tasks (as compared to playbook2).
+
+```yaml
+- hosts: linux
+  become: yes
+  vars:
+    http_port: 8000
+    https_port: 4443
+    html_welcome_msg: "Hello 90DaysOfDevOps - Welcome to Day 66! This new version comes from ansible-galaxy"
+  roles:
+    - apache2
+```
+
+We'll create some more role for all servers (common) and load balancer (ngix)
+
+
+```shell
+root@ansible-vm-1:~/ansible_sandbox/scenario3# ansible-galaxy init roles/common
+- Role roles/common was created successfully
+root@ansible-vm-1:~/ansible_sandbox/scenario3# ansible-galaxy init roles/ngix
+- Role roles/ngix was created successfully
+root@ansible-vm-1:~/ansible_sandbox/scenario3# tree
+.
+├── playbook3.yml
+└── roles
+    ├── apache2
+    │   ├── README.md
+    │   ├── defaults
+    │   │   └── main.yml
+    │   ├── files
+    │   ├── handlers
+    │   │   └── main.yml
+    │   ├── meta
+    │   │   └── main.yml
+    │   ├── tasks
+    │   │   ├── apache2_install.yml
+    │   │   └── main.yml
+    │   ├── templates
+    │   │   ├── index.html.j2
+    │   │   └── ports.conf.j2
+    │   ├── tests
+    │   │   ├── inventory
+    │   │   └── test.yml
+    │   └── vars
+    │       └── main.yml
+    ├── common
+    │   ├── README.md
+    │   ├── defaults
+    │   │   └── main.yml
+    │   ├── files
+    │   ├── handlers
+    │   │   └── main.yml
+    │   ├── meta
+    │   │   └── main.yml
+    │   ├── tasks
+    │   │   └── main.yml
+    │   ├── templates
+    │   ├── tests
+    │   │   ├── inventory
+    │   │   └── test.yml
+    │   └── vars
+    │       └── main.yml
+    └── ngix
+        ├── README.md
+        ├── defaults
+        │   └── main.yml
+        ├── files
+        ├── handlers
+        │   └── main.yml
+        ├── meta
+        │   └── main.yml
+        ├── tasks
+        │   └── main.yml
+        ├── templates
+        ├── tests
+        │   ├── inventory
+        │   └── test.yml
+        └── vars
+            └── main.yml
+
+28 directories, 28 **files**
 ```
