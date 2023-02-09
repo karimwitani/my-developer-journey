@@ -123,7 +123,7 @@ hostname.domain.com
         msg: "{{ ansible_os_family }}"
 ```
 
-### Ansible Galaxy and roles
+## Ansible Galaxy & Roles
 
 roles are used to group different groups of assets into categories that are similar and share common tasks (webservers/loadbalanceers...)
 
@@ -218,8 +218,6 @@ The playbook2.yml file would import tasks using the below syntax:
   handlers:
   - import_tasks: handlers/main.yml
 ```
-
-## Ansible Galaxy
 
 In scanrios where we have more specific functions for each server (loadbalancer, database servers...) we can use
 ansible-galaxy to create roles and manage them in shared repositories
@@ -332,4 +330,140 @@ root@ansible-vm-1:~/ansible_sandbox/scenario3# tree
             └── main.yml
 
 28 directories, 28 **files**
+```
+
+## Tags in Ansible
+
+- As playbooks get biggert and we only want certain parts of them to be run in some cases, we can ascribe tags to sections
+of the playbook using tags.
+
+- In the below example we add a tag in the playbook for the loadbalancer plays.
+
+```yaml
+- hosts: loadbalancers
+  become: yes
+  roles:
+    - common
+    - nginx
+  tags: loadbalancer
+```
+
+- We can list the tags in a play book using the below command
+
+```shell
+root@ansible-vm-1:~/ansible_sandbox/scenario5# ansible-playbook playbook5.yml --list-tags
+
+playbook: playbook5.yml
+
+  play #1 (webservers): webservers      TAGS: []
+      TASK TAGS: []
+
+  play #2 (loadbalancers): loadbalancers        TAGS: [loadbalancer]
+      TASK TAGS: [loadbalancer]
+```
+
+- To run specific sections of the playbook we can specify the tags that we want to target
+
+```shell
+ansible-playbook playbook5.yml --tags proxy
+```
+
+- Some task can be specified to run no matter what tags are specified in the playbook run command using the tag:always field
+in that task's section of the playbook.
+
+- You can bundle multiple tags together to be run with this syntax
+  - --tags proxy,web
+
+## Variables
+
+- As infrastructure grows you would want to dynamicaly generate automation files which is where variables come into play.
+There are two types:
+  - User Created
+  - Ansible Facts
+
+### Ansible Facts
+
+- Using the command ansible [host_group_name] -m setup. You get a long JSON output that details everything about the 
+machines in that group.
+
+- The ansible facts and jinja2 templating can be used to create dynamic for loops that interpolate facts as needed without
+  manualy hardcoding
+  - In the below example we're configuring the nginx proxies dynamically. It will look for each node in the webserver
+  group and interpolate the nodename as an upstream server.
+
+```jinja
+#Dynamic Config for server {{ ansible_facts['nodename'] }}
+    upstream webservers {
+  {% for host in groups['webservers'] %}
+        server {{ hostvars[host]['ansible_facts']['nodename'] }}:8000;
+    {% endfor %}
+    }
+
+    server {
+        listen 80;
+
+        location / {
+                proxy_pass http://webservers;
+        }
+    }
+```
+
+### User Created
+
+- User generated variables are what we've seen previously in the playbook files, such as the http_port and html_welcome_msg.
+- However we can cleanup the file structure and let those variables be accessed dynamically
+- We'll create a a file under groups_vars/all/common_variables.yml and move the following variables into it
+
+```yaml
+http_port: 8000
+https_port: 4443
+html_welcome_msg: "Hello 90DaysOfDevOps - Welcome to Day 68!"
+```
+
+- Now our playbook looks like this
+
+```yaml
+- hosts: webservers
+  become: yes
+  roles:
+    - common
+    - apache2
+  tags: web
+
+- hosts: proxy
+  become: yes
+  roles:
+    - common
+    - nginx
+  tags: proxy
+```
+
+- We can now use those variables in mysite.j2 to configure out nginx proxy
+
+```jinja2
+#Dynamic Config for server {{ ansible_facts['nodename'] }}
+    upstream webservers {
+  {% for host in groups['webservers'] %}
+        server {{ hostvars[host]['ansible_facts']['default_ipv4']['address'] }}:{{ http_port }};
+    {% endfor %}
+    }
+
+    server {
+        listen 80;
+
+        location / {
+                proxy_pass http://webservers;
+        }
+    }
+```
+
+- We also modify the index.html of under roles/apache2/templates/index.html.j2 so that we know which node is serving us
+  the page from behind the loadbalancer.
+
+```html
+<html>
+
+<h1>{{ html_welcome_msg }}! I'm webserver {{ ansible_facts['nodename'] }} </h1>
+
+</html>
 ```

@@ -5,6 +5,7 @@
     - [*What is DHCP ?*](#what-is-dhcp-)
   - [Basic Concepts](#basic-concepts)
     - [*What is kerberos?*](#what-is-kerberos)
+    - [what is the difference between the heap memory and the call stack?](#what-is-the-difference-between-the-heap-memory-and-the-call-stack)
     - [*What is NAT?*](#what-is-nat)
     - [*What is IDPS?*](#what-is-idps)
     - [*What is a firewall?*](#what-is-a-firewall)
@@ -24,6 +25,8 @@
 ## Basic Concepts
 
 ### *What is kerberos?*
+
+### what is the difference between the heap memory and the call stack?
 
 ### *What is NAT?*
 
