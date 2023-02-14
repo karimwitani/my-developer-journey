@@ -383,7 +383,7 @@ There are two types:
 
 ### Ansible Facts
 
-- Using the command ansible [host_group_name] -m setup. You get a long JSON output that details everything about the 
+- Using the command ansible [host_group_name] -m setup. You get a long JSON output that details everything about the
 machines in that group.
 
 - The ansible facts and jinja2 templating can be used to create dynamic for loops that interpolate facts as needed without
@@ -466,4 +466,14 @@ html_welcome_msg: "Hello 90DaysOfDevOps - Welcome to Day 68!"
 <h1>{{ html_welcome_msg }}! I'm webserver {{ ansible_facts['nodename'] }} </h1>
 
 </html>
+```
+
+## inventory Files
+
+We've defined our hosts in the /etc/ansible/hosts file, however we can have different files for different environments.
+
+We can run playbooks using differing invetory files using the below command (-i flag)
+
+```shell
+ansible-playbook -i [inventory_file_path] [playbook_file_path]
 ```
