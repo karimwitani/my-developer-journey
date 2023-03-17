@@ -477,3 +477,17 @@ We can run playbooks using differing invetory files using the below command (-i 
 ```shell
 ansible-playbook -i [inventory_file_path] [playbook_file_path]
 ```
+
+## HOW tos?
+
+### How to install a package in a host?
+
+### How to check if directory exists?
+
+### How to save the output of a command in a task?
+
+### How to copy the content of one file into remote hosts?
+
+## FAQ
+
+### What is the difference between raw and shell?

@@ -2,6 +2,9 @@
 # DATABASES
 
 - [DATABASES](#databases)
+  - [Databases](#databases-1)
+    - [What is an index? How is it different from a primary key?](#what-is-an-index-how-is-it-different-from-a-primary-key)
+    - [What is the difference between a clustered and unclustered index?](#what-is-the-difference-between-a-clustered-and-unclustered-index)
   - [SQL](#sql)
   - [MySQL](#mysql)
     - [*What is the memory usage of various datatypes?*](#what-is-the-memory-usage-of-various-datatypes)
@@ -23,6 +26,14 @@
       - [*How do you run liquibase migrations?*](#how-do-you-run-liquibase-migrations)
   - [FLYWAY](#flyway)
   - [References](#references)
+
+---
+
+## Databases
+
+### What is an index? How is it different from a primary key?
+
+### What is the difference between a clustered and unclustered index?
 
 ---
 
