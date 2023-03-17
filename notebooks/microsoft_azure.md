@@ -52,7 +52,6 @@
       - [Azure application gateway](#azure-application-gateway)
       - [Azure front door](#azure-front-door)
       - [ExpressRoute](#expressroute)
-    - [configure network security](#configure-network-security-1)
     - [Enable Container Security](#enable-container-security)
       - [Configuring Azure Container Security](#configuring-azure-container-security)
       - [Azure Container Instances (ACI)](#azure-container-instances-aci)
@@ -78,14 +77,23 @@
       - [Configure key rotation](#configure-key-rotation)
       - [Managing Key Vault safety and recovery features](#managing-key-vault-safety-and-recovery-features)
     - [Implement storage security](#implement-storage-security)
+      - [Data sovereignty](#data-sovereignty)
+      - [Modalities to Access Ressources in Azure Storage](#modalities-to-access-ressources-in-azure-storage)
+      - [Shared access signatures](#shared-access-signatures)
+      - [Azure AD Storage Authentication](#azure-ad-storage-authentication)
+      - [Storage Encryption](#storage-encryption)
+      - [Data retention policies](#data-retention-policies)
+      - [AZURE Files Authentication](#azure-files-authentication)
+    - [Configure and manage SQL database security](#configure-and-manage-sql-database-security)
+      - [SQL Database Authentication](#sql-database-authentication)
+      - [Configuring Database Firewalls](#configuring-database-firewalls)
+      - [Database Auditing](#database-auditing)
+      - [Data discovery and classification](#data-discovery-and-classification)
+      - [Vulnerability Assessements](#vulnerability-assessements)
+      - [Dynamic Data Masking](#dynamic-data-masking)
+      - [Transparent Data Encryption](#transparent-data-encryption)
+      - [Always Encrypted Data](#always-encrypted-data)
   - [AZ-500: Manage security operation](#az-500-manage-security-operation)
-    - [Data sovereignty](#data-sovereignty)
-    - [Modalities to Access Ressources in Azure Storage](#modalities-to-access-ressources-in-azure-storage)
-    - [Shared access signatures](#shared-access-signatures)
-    - [Azure AD Storage Authentication](#azure-ad-storage-authentication)
-    - [Storage Encryption](#storage-encryption)
-    - [Data retention policies](#data-retention-policies)
-    - [AZURE Files Authentication](#azure-files-authentication)
 - [Microsoft Certified: Cybersecurity Architect Expert link](#microsoft-certified-cybersecurity-architect-expert-link)
 - [Service Bus](#service-bus)
   - [*What is azure service bus?*](#what-is-azure-service-bus)
@@ -855,8 +863,6 @@ Encryption can be done in several ways:
 - End-to-end encryption by IPsec and MACsec
   - IPsec is an IETF standard. It encrypts data at the Internet Protocol (IP) level or Network Layer 3.
 
-### configure network security
-
 ### Enable Container Security
 
 Containers are isolated silos that use the host's operating system's kernel to run. They are isolated from the surrounding
@@ -1254,14 +1260,12 @@ access to your key vault.
 
 ### [Implement storage security](https://learn.microsoft.com/en-us/training/modules/storage-security/)
 
-## [AZ-500: Manage security operation](https://learn.microsoft.com/en-us/training/paths/manage-security-operation/)
-
 Among the responsabilities of a security engineer is the protection of their organization's data:
 
 - Lock access to specfic users and apps
 - Encrypt data at rest and during transit
 
-### Data sovereignty
+#### Data sovereignty
 
 Data sovereignty is defined as the laws that regulate the privacy of data and who has control over it. It encompasses
 cross border treaties and prevents data from being subpeonaed by countries and region government (e.g: The EU)
@@ -1274,7 +1278,7 @@ A geography contains at least one region. Each region contains at least one data
 The benefits of this arrangement is the added security layer for disaster recovery and business continuity. Physical isolation,
 replication, data residency requirements are among the other benefits.
 
-### Modalities to Access Ressources in Azure Storage
+#### Modalities to Access Ressources in Azure Storage
 
 Data hosted on Azure can be accessed using any of the below authentication methods:
 
@@ -1289,7 +1293,7 @@ Data hosted on Azure can be accessed using any of the below authentication metho
 - Anonymous access to containers and blobs: Read-only public access to blob storage is possible in cases where you don't
   care who access your information (it's public, such as a sales presentation pdf file)
 
-### Shared access signatures
+#### Shared access signatures
 
 If third party apps need top access your data it's better not to give them access to your storage account keys. Instead
 you can share SHARED ACCESS TOKENS (SAS) which are strings that contain security tokens that can be attached to URIs.
@@ -1300,7 +1304,7 @@ client to read/view that picture.
 
 If an SAS is suspected of being compromised it can be revoked.
 
-### Azure AD Storage Authentication
+#### Azure AD Storage Authentication
 
 Azure AD can authenticate users and issue them OAuth 2.0 tokens which can then be used to authorise requests against storage
 accounts. The security principal (user, group or application) that makes the request to access needs to have at least one
@@ -1310,7 +1314,7 @@ Azure role which will determine their access permissions
 
 ![az500-active-directory-blobs](../assets/azure/az500-active-directory-blobs.png)
 
-### Storage Encryption
+#### Storage Encryption
 
 - Data stored in Azure Storage is automatically encrypted using Stroge Service Encryption (SSE) using 256-bit AES encryption.
 - Azure AD and RBAC are supported for both ressrouce management operations and data operations
@@ -1324,7 +1328,7 @@ Azure clients can either use Microsoft-managed keys or use their own keys. They 
 - customer-managed keys for all operations in the storage account
 - customer-provided keys for Blob storage operations that can provide granular control on how blob data is encrypted/decrypted
 
-### Data retention policies
+#### Data retention policies
 
 Immutable storage for Azures Blob storage allow critical data object to be stored in a WORM state (write once, read many).
 
@@ -1334,7 +1338,7 @@ Data retention policies can either be time-based of legal holds:
 - Legal hold have indefinit time horizons in which the data can be read but not modified. Legal holds associate with tags
   (case name, event names). Legal holds can be tied to investigations of general protection policies
 
-### AZURE Files Authentication
+#### AZURE Files Authentication
 
 Azure Files supports identity-based authentication over Server Message Block (SMB) through on-premises Active Directory
 Domain Services (AD DS) and Azure Active Directory Domain Services (Azure AD DS).
@@ -1346,6 +1350,26 @@ Shares
 
 Azure Files preserves the current permissions ACLs (access control lists) when copying files. Azure File Sync or other
 tools can be used to copy the file and preserve teh ACLs
+
+### [Configure and manage SQL database security](https://learn.microsoft.com/en-us/training/modules/sql-database-security/)
+
+#### SQL Database Authentication
+
+#### Configuring Database Firewalls
+
+#### Database Auditing
+
+#### Data discovery and classification
+
+#### Vulnerability Assessements
+
+#### Dynamic Data Masking
+
+#### Transparent Data Encryption
+
+#### Always Encrypted Data
+
+## [AZ-500: Manage security operation](https://learn.microsoft.com/en-us/training/paths/manage-security-operation/)
 
 # Microsoft Certified: Cybersecurity Architect Expert [link](https://learn.microsoft.com/en-us/certifications/cybersecurity-architect-expert)
 
