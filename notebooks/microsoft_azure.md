@@ -93,6 +93,12 @@
       - [Dynamic Data Masking](#dynamic-data-masking)
       - [Transparent Data Encryption](#transparent-data-encryption)
       - [Always Encrypted Data](#always-encrypted-data)
+    - [Configure Application Security Features](#configure-application-security-features)
+      - [Microsoft Identity Platform](#microsoft-identity-platform)
+      - [Registering apps with identity platforms](#registering-apps-with-identity-platforms)
+      - [Microsoft Graph](#microsoft-graph)
+      - [Enabling Managed Identities](#enabling-managed-identities)
+      - [Azure app service](#azure-app-service)
   - [AZ-500: Manage security operation](#az-500-manage-security-operation)
 - [Microsoft Certified: Cybersecurity Architect Expert link](#microsoft-certified-cybersecurity-architect-expert-link)
 - [Service Bus](#service-bus)
@@ -1368,6 +1374,70 @@ tools can be used to copy the file and preserve teh ACLs
 #### Transparent Data Encryption
 
 #### Always Encrypted Data
+
+### [Configure Application Security Features](https://learn.microsoft.com/en-us/training/modules/application-security/)
+
+#### Microsoft Identity Platform
+
+Microsoft Identity Platform is the next evolution of Microsoft Active Directoy. It uses OAuth and OpenID Connect for
+and authentiation, respectivly. It allows devellopers to offer single sign on **(SSO)** for user and tokens for accessing
+APIs such as **Microsoft Graph** and APIs that they've built.
+
+The Identity Platform (v2.0) offers more features than the first generation Active Directory (v1.0) endpoint.
+
+- Microsoft Authentication Library **(MSAL)** is an easy to use open source project that was developed using the
+  Microsoft Development Lifecycle **(SDL)**
+- Incremental consent can be configured into application in order to provide access to more privileged scopes only when
+  warranted.
+- Azure Active Directory B2C is also supported in MSAL which allows users to sign-in using their preffered social/enterprise/personal
+  accounts.
+  - Azure provisionned accounts (schools / business accounts)
+  - Personal accounts ( Hotmail / Outlook )
+  - Social identities (Google/LinkedIn/Facebook ...) through Active Directory B2C (business to consumer)
+
+MSAL can be used for many scenarios, includin:
+
+- Web apps signing in users
+  - Web apps calling a web API on behalf of signed in users
+- Web APIs calling downstream APIs on behalf of signed-in users
+- Desktop/Mobile appllications calling web APIs on behalf of signed-in users
+- Deamon/Desktop applications calling APIs on behalf of themselves
+
+MSAL is offered in a number of frameworks such as Android, Angular, iOS, MacOS, Javascrips, Java, Go & Python.
+
+Active Directory Authenication Library, aka ADAL (v1.0) supports only work accounts while MSAL (v2.0) supports personal
+and social accounts as well.
+
+[Identity Platform Documentation](https://learn.microsoft.com/en-us/azure/active-directory/develop/)
+
+[ID Token Documentation](https://learn.microsoft.com/en-us/azure/active-directory/develop/id-tokens)
+
+#### Registering apps with identity platforms
+
+In order for apps to receive tokens from Azure Identity Platform they need to be registered. This integrates the app with
+the Identity service and establishes basic information about it that is needed to obtain tokens:
+
+- Application ID
+- Redirect URL/URI: endpoint that the app receives responses from Azure Identity Platform (URIs for mobile apps)
+- Application secrects: Either a password or a public/private key pair that the app will use to authenticate with Azure.
+
+Devellopers will use authentication libraries abstract many protocol details, like validation, cookie handling, token
+caching, and maintaining secure connections.
+
+When apps are registered (either single or multi tenant) they will have a global application object created. This object
+will serve as a blueprint for the app which will be used to create an application service principal in each of the tenants
+in which the application runs.
+
+Application object is the global representation of your application for use across all tenants, and the service principal
+is the local representation for use in a specific tenant
+
+[App Registration & Service Principal Documenation](https://learn.microsoft.com/en-us/azure/active-directory/develop/app-objects-and-service-principals)
+
+#### Microsoft Graph
+
+#### Enabling Managed Identities
+
+#### Azure app service
 
 ## [AZ-500: Manage security operation](https://learn.microsoft.com/en-us/training/paths/manage-security-operation/)
 
