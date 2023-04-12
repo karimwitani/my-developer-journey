@@ -100,6 +100,9 @@
       - [Enabling Managed Identities](#enabling-managed-identities)
       - [Azure app service](#azure-app-service)
   - [AZ-500: Manage security operation](#az-500-manage-security-operation)
+    - [Configure and manage Azure Monitor](#configure-and-manage-azure-monitor)
+      - [Azure Monitor Metrics](#azure-monitor-metrics)
+    - [Log Analytics](#log-analytics)
 - [Microsoft Certified: Cybersecurity Architect Expert link](#microsoft-certified-cybersecurity-architect-expert-link)
 - [Service Bus](#service-bus)
   - [*What is azure service bus?*](#what-is-azure-service-bus)
@@ -1375,18 +1378,52 @@ tools can be used to copy the file and preserve teh ACLs
 
 #### Always Encrypted Data
 
+Always encrypted data is a feature where the owners of the data and the applications that they use encrypt the data on
+the application side, using keys that are never exposed to the database. Thus all the data stored is isolated and protected
+even from the users who manage the data.
+
+The encrypted data is passed to the database engine. In order for it to be queried there are the Always Encrypted driver
+used by the client rewrites queries to preserve the application semantics so that the database driver can still query the
+data even though it's encrypted.
+
+There are two types of encryptions under this paradigm: **Deternministic** and **Randomized**. Deterministic always generates
+he same cyphertext when given the same plaintext which allows for allows point lookups, equality joins, grouping and
+indexing on encrypted columns. This option is less secure that randomized encryption because it still allows for the possibility
+, although improbable, that a bad actor can guess the logic and get around the encryption. However, randomized encryption
+makes it harder to query the data as point lookups, equality joins, grouping and indexing is not possible.
+
+To setup always encrypted paragdigm you need to generate **Always Encrypted keys**. This can be done via SQL Server Management
+Studio (SSMS) or PowerShell.
+
+Always Encrypted uses two types of keys: column encryption keys and column master keys. A column encryption key is used
+to encrypt data in an encrypted column. A column master key is a key-protecting key that encrypts one or more column
+encryption keys.
+
+The database stores the encrypted keys stores encrypted values of column encryption keys and the information about the
+location of column master keys, which are stored in external trusted key stores, such as Azure Key Vault, Windows
+Certificate Store on a client machine, or a hardware security module.
+
+To query the encrypted data a client application must use an Always Encrypted enabled client driver.For each parameter
+that needs to be encrypted, the driver obtains the information about the encryption algorithm and the encrypted value of
+the column encryption key for the column, the parameter targets, as well as the location of its corresponding column
+master key. Next, the driver contacts the key store, containing the column master key, in order to decrypt the encrypted
+column encryption key value and then, it uses the plaintext column encryption key to encrypt the parameter.
+
+The driver substitutes the plaintext values of the parameters targeting encrypted columns with their encrypted values,
+and it sends the query to the server for processing.
+
 ### [Configure Application Security Features](https://learn.microsoft.com/en-us/training/modules/application-security/)
 
 #### Microsoft Identity Platform
 
-Microsoft Identity Platform is the next evolution of Microsoft Active Directoy. It uses OAuth and OpenID Connect for
+Microsoft Identity Platform is the next evolution of Microsoft Active Directoy. It uses OAuth and OpenID Connect for authorization
 and authentiation, respectivly. It allows devellopers to offer single sign on **(SSO)** for user and tokens for accessing
 APIs such as **Microsoft Graph** and APIs that they've built.
 
 The Identity Platform (v2.0) offers more features than the first generation Active Directory (v1.0) endpoint.
 
 - Microsoft Authentication Library **(MSAL)** is an easy to use open source project that was developed using the
-  Microsoft Development Lifecycle **(SDL)**
+  Secure Development Lifecycle **(SDL)**
 - Incremental consent can be configured into application in order to provide access to more privileged scopes only when
   warranted.
 - Azure Active Directory B2C is also supported in MSAL which allows users to sign-in using their preffered social/enterprise/personal
@@ -1406,11 +1443,23 @@ MSAL can be used for many scenarios, includin:
 MSAL is offered in a number of frameworks such as Android, Angular, iOS, MacOS, Javascrips, Java, Go & Python.
 
 Active Directory Authenication Library, aka ADAL (v1.0) supports only work accounts while MSAL (v2.0) supports personal
-and social accounts as well.
+and social accounts as well. Additionally MSAL has a feature called **Continous Access Evaluation** that allows tokens
+to be revoked on critical events and policy evaluations as opposed to only token lifetime expiry. Such events can be:
+
+- User Account is deleted or disabled
+- Password for a user is changed or reset
+- Multifactor Authentication is enabled for the user
+- Administrator explicitly revokes all refresh tokens for a user
+- High user risk detected by Azure AD Identity Protection
+
+
+[Continuous Access Evaluation Documetations](https://learn.microsoft.com/en-us/azure/active-directory/develop/app-resilience-continuous-access-evaluation?tabs=dotnet)
 
 [Identity Platform Documentation](https://learn.microsoft.com/en-us/azure/active-directory/develop/)
 
 [ID Token Documentation](https://learn.microsoft.com/en-us/azure/active-directory/develop/id-tokens)
+
+[Guide to migrating from ADAL to MSAL](https://learn.microsoft.com/en-us/azure/active-directory/develop/msal-migration)
 
 #### Registering apps with identity platforms
 
@@ -1435,11 +1484,189 @@ is the local representation for use in a specific tenant
 
 #### Microsoft Graph
 
+Microsoft Graph Security API makes it easy to connect with security solutions from Microsoft and partners. It acts as a broker
+that gets user consent from a user and relays that to all security providers in the ecosystem. This way an application can
+get user consent once and receive scopes from multiple services.
+
+![az500-graph-permissions-2](../azure/az500-graph-permissions-2)
+
+1. The application user signs in to the provider application to view the consent form from the provider. This consent
+   form experience or UI is owned by the provider and applies to non-Microsoft providers only to get explicit consent
+   from their customers to send requests to Microsoft Graph Security API.
+2. The client consent is stored on the provider side.
+3. The provider consent service calls the Microsoft Graph Security API to inform consent approval for the respective customer.
+4. The application sends a request to the Microsoft Graph Security API.
+5. The Microsoft Graph Security API checks for the consent information for this customer mapped to various providers.
+6. The Microsoft Graph Security API calls all those providers the customer has given explicit consent to via the provider
+   consent experience.
+7. The response is returned from all the consented providers for that client.
+8. The result set response is returned to the application.
+9. If the customer has not consented to any provider, no results from those providers are included in the response.
+
+Microsoft Graph helps unify and standardise alert tracking and response by integrating data from multiple sources and corellating
+alerts from alerts across security solutions.
+
 #### Enabling Managed Identities
+
+Managed Identities is used to authenticate to any service that supports Azure AD authentication, including Key Vault,
+without any credentials in your code.
+
+Terminology:
+
+- Client ID - a unique identifier generated by Azure AD that is tied to an application and service principal during its
+  initial provisioning.
+- Principal ID - the object ID of the service principal object for your managed identity that is used to grant role-based
+  access to an Azure resource.
+- Azure Instance Metadata Service (IMDS) - a REST endpoint accessible to all IaaS VMs created via the Azure Resource Manager.
+  The endpoint is available at a well-known non-routable IP address (169.254.169.254) that can be accessed only from
+  within the VM.
+
+There are two types of identities for Azure ressources:
+
+- System-assigned managed identity are enabled directly on an Azure service instance. The lifecyle of the indetity is the
+  same as the underlying service and get purged once the service is deleted.
+- User-assigned managed identity is created as a standalone Azure resource. After the identity is created, the identity
+  can be assigned to one or more Azure service instances. It's lifecycle is separate from the underlying service.
+
+Credential are rotated every 46 days but its up to the service provider to call for new credentials so it can be longer.
+
+![az500-managed-identities](../assets/azure/az500-managed-identities)
+
+1. Azure Resource Manager receives a request to enable the system-assigned managed identity on a VM.
+2. Azure Resource Manager creates a service principal in Azure AD for the identity of the VM. The service principal is
+   created in the Azure AD tenant that's trusted by the subscription.
+3. Azure Resource Manager configures the identity on the VM by updating the Azure Instance Metadata Service identity
+   endpoint with the service principal client ID and certificate.
+4. After the VM has an identity, use the service principal information to grant the VM access to Azure resources. To call
+   Azure Resource Manager, use role-based access control (RBAC) in Azure AD to assign the appropriate role to the VM
+   service principal. To call Key Vault, grant your code access to the specific secret or key in Key Vault.
+5. Your code that's running on the VM can request a token from the Azure Instance Metadata service endpoint,
+   accessible only from within the VM: http://169.254.169.254/metadata/identity/oauth2/token
+6. The resource parameter specifies the service to which the token is sent. To authenticate to Azure Resource Manager,
+   use resource=https://management.azure.com/.
+7. API version parameter specifies the IMDS version, use api-version=2018-02-01 or greater.
+8. A call is made to Azure AD to request an access token (as specified in step 5) by using the client ID and certificate
+   configured in step 3. Azure AD returns a JSON Web Token (JWT) access token.
+9. Your code sends the access token on a call to a service that supports Azure AD authentication
 
 #### Azure app service
 
+Azure App Service is an HTTP-based service for hosting web applications, REST APIs, and mobile backends. You can develop
+in your favorite language and applications run and scale with ease on both Windows or Linux.
+
+It adds security, load balancing, autoscaling, and automated management as well as DevOps capabilities, such as continuous
+deployment from Azure DevOps, GitHub, Docker Hub, and other sources, package management, staging environments, custom domain,
+and TLS/SSL certificates.
+
+Among the various advantages of App Serice:
+
+- Multiple languages and frameworks
+- Managed production environment
+- Containerization and Docker
+- DevOps optimization
+- Global scale with high availability
+- Connections to SaaS platforms and on-premises data - Choose from more than 50 connectors
+- Security and compliance - ISO, SOC, and PCI compliant. Authenticate users with Azure Active Directory, Google, Facebook.
+  Create IP address restrictions and manage service identities. Prevent subdomain takeovers.
+- Application templates
+- Visual Studio Code integration - Dedicated tools for creating, deploying, and debugging.
+- API and mobile features - enabling authentication, offline data sync, push notifications ...
+- Serverless code - Run a code snippet or script on-demand without having to explicitly provision or manage infrastructure
+
+App Service Environment is an Azure App Service feature that provides a fully isolated and dedicated environment for
+running App Service apps securely at high scale. An App Service plan is essentially a provisioning profile for an application
+host. A single App Service Environment v3 can have up to 200 total App Service plan instances across all the App
+Service plans combined
+
+An app service always runs in an App Service plan wich is defined as a set of compute resources for a web app to run.
+
+Each App Service plan defines:
+
+- Operating System (Windows, Linux)
+- Region (West US, East US, etc.)
+- Number of VM instances
+- Size of VM instances (Small, Medium, Large)
+- Pricing tier (Free, Shared, Basic, Standard, Premium, PremiumV2, PremiumV3, Isolated, IsolatedV2)
+
+When you install an App Service Environment, you pick the Azure virtual network that you want it to be deployed in.
+All of the inbound and outbound application traffic is inside the virtual network you specify. You deploy into a single
+subnet in your virtual network, and nothing else can be deployed into that subnet.
+
+Azure App Service Environment can be deployed across availability zones (AZ) to help you achieve resiliency and reliability
+
+You can add security certificates to you apps and secure a cutom DNS name to use with you application code. You can proivision
+them through:
+
+- Creating a free App Service managed certificate
+- Purchasing an App Service certificate: A private certificate that's managed by Azure.
+- Importing a certificate from Key Vault
+- Uploading a private certificate
+- Upload a public certificate: Public certificates are not used to secure custom domains, but you can load them into
+  your code if you need them to access remote resources.
+
 ## [AZ-500: Manage security operation](https://learn.microsoft.com/en-us/training/paths/manage-security-operation/)
+
+### [Configure and manage Azure Monitor](https://learn.microsoft.com/en-ca/training/modules/azure-monitor/)
+
+Azure monitor watches how your ressources and triggers alerts if needed. A security engineer will be tasked with configuring
+Azure Monitor to read metrics and logs, setup and respond to alert as well as well as reviewing diagnostics settings.
+
+![az500-azure-monitor-1](../assets/azure/az500-azure-monitor-1)
+
+Azure Monitor collects metrics (such as VM CPU usage) as well as application logs. It can use pre-configured queries to
+retrieve and analyse the data. They can then be used to create visualizations or configure alerting rules.
+
+Azure Monitor streams data to an event hub that routes this data into a **Security Information & Event Monitoring** Solution
+(SIEM).
+
+Data collected can be:
+
+- Application monitoring data (by instrumenting your code with an SDK such as the Application Insights SDK) or
+  or running agents that listen to your application logs (Windows Azure Diagnostic Agent or Linux Azure Diagnostic Agent)
+- Guest OS monitoring data (Linux syslog or Windows system events)
+- Azure resource monitoring data
+- Azure subscription monitoring data (such as service health incidents and Azure Resource Manager audits)
+- Azure tenant monitoring data (such as Azure Active Directory audits and sign-ins)
+
+In addition to Azure Monitor you can use Azure Sentinel which out of the box provides
+
+- More than 100 built-in alert rules
+- AI powered features to detect security breach
+- Jupyter Notebooks that use a growing collection of hunting queries, exploratory queries, and python libraries.
+- Investigation graphs for visualizing and traversing the connections between entities
+
+#### Azure Monitor Metrics
+
+Azure Monitor Metrics collects numerical data at regular intervals that describe the state of ressoruces.
+
+![azure-monitor-metrics-example](../azure/azure-monitor-metrics-example)
+
+Native metrics use tools in Azure Monitor for analysis and alerting. Platform metrics are standard and don't require any
+extra cost or setup while custom metrics are collected from applications and agents that you setup. Prometheus metrics are
+collected from kubernetes clusters.
+
+Prometheus is an open-source toolkit that collects data for monitoring and alerting. It offers a multi-dimensional data
+model with time series data identified by metric name and key/value pairs. Time series collection happens via a pull
+model over Hypertext Transfer Protocol (HTTP). Targets are discovered via service discovery or static configuration.
+
+Data in Azure Monitor Logs is retrieved using a log query written with the Kusto query language, which allows you to
+quickly retrieve, consolidate, and analyze collected data.
+
+### Log Analytics
+
+Log Analytics is the primary tool in the Azure portal for writing log queries and interactively analyzing their results.
+
+You can start Log Analytics from several places in the Azure portal. The scope of the data available to Log Analytics
+is determined by how you start it.
+
+- Select Logs from the Azure Monitor menu or Log Analytics workspaces menu.
+- Select Analytics from the Overview page of an Application Insights application.
+- Select Logs from the menu of an Azure resource.
+
+Azure Log Analytics agent was develloped to collect data in Azure, other clouds and on-prem and forward them to Azure Monitor
+workspace.
+
+![az500-connected-sources](../azure/az500-connected-sources)
 
 # Microsoft Certified: Cybersecurity Architect Expert [link](https://learn.microsoft.com/en-us/certifications/cybersecurity-architect-expert)
 

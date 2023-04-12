@@ -10,6 +10,7 @@
   - [What is key encryption and wrapping?](#what-is-key-encryption-and-wrapping)
     - [What is a content encryption key (CEK)?](#what-is-a-content-encryption-key-cek)
   - [What is envellope encryption?](#what-is-envellope-encryption)
+  - [What is the difference between SAML and OpenID Connect?](#what-is-the-difference-between-saml-and-openid-connect)
 
 ---
 
@@ -52,5 +53,7 @@ An important feature of block ciphers is that they can be used in many mode of o
 ### What is a content encryption key (CEK)?
 
 ## What is envellope encryption?
+
+## What is the difference between SAML and OpenID Connect?
 
 ---
