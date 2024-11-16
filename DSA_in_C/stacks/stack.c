@@ -43,7 +43,7 @@ void push(Stack *s, int val)
 
 PopResult pop(Stack *s)
 {
-    PopResult pop_result{.success=NULL, .value=NULL};
+    PopResult pop_result = { .success = false, .value = 0 };
     if (stack_is_empty(s))
     {
         printf("Stack is empty!!\n");
