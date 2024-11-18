@@ -7,7 +7,7 @@
 - All chars end with '\0'
 
 ## 20240-11-16
-
+### Defining Structs
 Structs are aliases for other existing data types in C;
 
 ```c
@@ -43,3 +43,51 @@ However there are a couple intricacies that need to be addressed
 - A typedef should define an alias . That is the second LLNode on line `} LLNode;`
 - To have a self-referential struct that doesn't cause an inifinite size error we use pointers instead of instance of the struct itself
     - this is done using `struct LLNode *next ;` because C knows already the size of a pointer
+
+### Printing out memory addresses
+In order to inspect the addresses of a variable, use %p instead of %d
+```c
+//node is a pointer while null_check is an int (0 or 1)
+printf("node %p\n", node); 
+printf("null_check %d\n", null_check);
+```
+
+## 2024-11-17
+### Heap vs stack allocation
+
+In C there are two ways memory is allocated to variables:
+1. Heap allocation
+2. Stack allocation
+
+Stack allocation happens within the call stack of a function call. This is done without dynamic memory allocation (we dont use malloc). The lifetime of these variables is restricted to the function execution and the memory is freed automatically once the function returns. Because the call stack work with last in, first out (aka LIFO) the memory access is quicker.
+
+Stack allocation on the other hand has two main limitations:
+1. Size limitations which could cause stack overflows, often caused by large local variables or deep recursions
+2. Risks of segmentation faults if the stack allocated is pointed at by a global variable, that global variable would be holding onto a dangling pointer
+
+Example: the node x is allocated on the stack and once the function returns the memory allocated to the node is freed. However the linked list head is now a dangling pointer which could lead to bad behavior/crashes/corrupted data.
+
+```c
+void list_insert(LinkedList *L, int val)
+{
+    LLNode x = {NULL, NULL, val}; // Stack allocation
+    if (L->head != NULL)
+    {
+        L->head->prev = &x;
+    }
+    L->head = &x;
+    x.prev = NULL;
+}
+```
+
+Heap allocation on the other hand refers to memory that is allocated from a large pool of unused data called the heap. this is done every time we call malloc, calloc or realloc in C. They remain in memory untill they are deallocated using `free()` and can persist beyond the function that created them. Access is slightly slower than stack-allocated memory but on the other hand has more flexibility.
+
+Here is the table in Markdown format:
+| Aspect             | Stack Allocation                                           | Heap Allocation                                      |
+|--------------------|------------------------------------------------------------|------------------------------------------------------|
+| **Allocation**     | Automatic by the system during function calls              | Manual using functions like `malloc` and `free`      |
+| **Lifetime**       | Limited to the function scope                              | Remains until explicitly deallocated                 |
+| **Memory Size**    | Limited (can cause stack overflow)                         | Larger (limited by system memory)                    |
+| **Speed**          | Faster access                                              | Slower access due to overhead                        |
+| **Management**     | Managed automatically                                      | Managed by the programmer                            |
+| **Usage Scenario** | Temporary variables, function parameters, return addresses | Data needing persistence, large data, dynamic arrays |
