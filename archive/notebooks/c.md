@@ -91,3 +91,36 @@ Here is the table in Markdown format:
 | **Speed**          | Faster access                                              | Slower access due to overhead                        |
 | **Management**     | Managed automatically                                      | Managed by the programmer                            |
 | **Usage Scenario** | Temporary variables, function parameters, return addresses | Data needing persistence, large data, dynamic arrays |
+
+
+## 2024-11-18
+### What is array decay to pointers in C?
+
+When passing an array to a function in C, we don't copy the entire array. Only the pointer to the first element of the array is passed. In the below example both are equivalent. Since we pass a pointer to the array, any changes made to it inside the function are reflected after the function returns.
+
+```c
+void func(int arr[]);
+
+void func(int *arr);
+```
+
+### Why should you always pass an array's size to a function?
+
+Because of decay to pointers, functions that take in arrays implicitly convert them to pointers to the first elements. In this case, computing the size of the array inside the function will return only the size of the pointer (ie: 2 bytes). 
+
+```c
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
+
+void function_taking_array(int array[])
+{
+    printf("The array is of size %d\n", ARRAY_SIZE(array)); 
+}
+
+
+int main ()
+{
+    int array[] = {1,2,3};
+    printf("The array is of size %d\n", ARRAY_SIZE(array)); // prints 3
+    function_taking_array(array); // prints 2
+}
+```
