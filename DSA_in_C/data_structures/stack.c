@@ -1,18 +1,9 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <limits.h>
+#include "stack.h"
 
-#define MAX_SIZE 2
-
-typedef struct {
-    int top;
-    int data[MAX_SIZE];
-} Stack;
-
-typedef struct {
-    bool success;
-    int value;
-} PopResult;
+#define MAX_SIZE 20
 
 void init_stack(Stack *s)
 {
@@ -38,7 +29,7 @@ void push(Stack *s, int val)
     }
     s->top++;
     s->data[s->top] = val;
-    printf("Pushed value %d onto stack\n", val);
+    // printf("Pushed value %d onto stack\n", val);
 }
 
 PopResult pop(Stack *s)
@@ -49,11 +40,12 @@ PopResult pop(Stack *s)
         printf("Stack is empty!!\n");
         pop_result.success = false;
     }
-    else {
-        pop_result.value = s->data[s->top];
-        s->data[s->top] = NULL;
-        s->top-- ;
-        // printf("Popped value %d from stack\n", pop_result.value);
+    else
+    {
+        pop_result.value = s->data[s->top];  // Retrieve the value at the top
+        s->data[s->top] = UINT_MAX;         // Clear the value by setting it to a sentinel
+        s->top--;                           // Decrement the top
+        pop_result.success = true;
     }
     return pop_result;
 }
@@ -68,6 +60,29 @@ int peek(Stack *s)
     return s->data[s->top];
 }
 
+void print_stack(Stack *s)
+{
+    // pop and store elements in a temporary stack while printing them
+    Stack temp_stack;
+    init_stack(&temp_stack);
+    PopResult res;
+    while (!stack_is_empty(s))
+    {
+        res = pop(s);
+        push(&temp_stack, res.value);
+        printf("%d, ", res.value);
+    }
+    printf("\n");
+
+    // place back items in original stack
+    while (!stack_is_empty(&temp_stack))
+    {
+        res = pop(&temp_stack);
+        push(s, res.value);
+    }
+}
+
+/** 
 int main()
 {
     Stack s;
@@ -91,3 +106,4 @@ int main()
 
     return 0;
 }
+*/

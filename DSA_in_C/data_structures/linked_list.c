@@ -73,56 +73,56 @@ void list_delete(LinkedList *L, LLNode *node)
     free(node);
 }
 
-int main ()
-{
-    LinkedList ll = { NULL };  // Initialize head  to NULL
-    LLNode *node;
-    int null_check;
+// int main ()
+// {
+//     LinkedList ll = { NULL };  // Initialize head  to NULL
+//     LLNode *node;
+//     int null_check;
 
-    // Insert values into list    
-    list_insert(&ll, 3);
-    list_insert(&ll, 4);
+//     // Insert values into list    
+//     list_insert(&ll, 3);
+//     list_insert(&ll, 4);
     
-    // Search for value 3
-    node = list_search(&ll, 3);
-    null_check = (node == NULL);
+//     // Search for value 3
+//     node = list_search(&ll, 3);
+//     null_check = (node == NULL);
 
-    if (node != NULL)
-    {
-        printf("Found node with val %d\n", node->val);
-    }
-    else
-    {
-        printf("Node with val 3 not found\n");
-    }
-    printf("null_check %d\n", null_check);
+//     if (node != NULL)
+//     {
+//         printf("Found node with val %d\n", node->val);
+//     }
+//     else
+//     {
+//         printf("Node with val 3 not found\n");
+//     }
+//     printf("null_check %d\n", null_check);
 
-    // Delete the node with value 3
-    if (node != NULL)
-    {
-        list_delete(&ll, node);
-    }
+//     // Delete the node with value 3
+//     if (node != NULL)
+//     {
+//         list_delete(&ll, node);
+//     }
 
-    // Search again for value 3
-    node = list_search(&ll, 3);
-    null_check = (node == NULL);
-    if (node != NULL)
-    {
-        printf("Found node with val %d\n", node->val);
-    }
-    else
-    {
-        printf("Node with val 3 not found after deletion\n");
-    }
-    printf("null_check %d\n", null_check);
+//     // Search again for value 3
+//     node = list_search(&ll, 3);
+//     null_check = (node == NULL);
+//     if (node != NULL)
+//     {
+//         printf("Found node with val %d\n", node->val);
+//     }
+//     else
+//     {
+//         printf("Node with val 3 not found after deletion\n");
+//     }
+//     printf("null_check %d\n", null_check);
 
-    // Clean up remaining nodes
-    // Since we only have one node left (with val 4), we can delete it
-    node = list_search(&ll, 4);
-    if (node != NULL)
-    {
-        list_delete(&ll, node);
-    }
+//     // Clean up remaining nodes
+//     // Since we only have one node left (with val 4), we can delete it
+//     node = list_search(&ll, 4);
+//     if (node != NULL)
+//     {
+//         list_delete(&ll, node);
+//     }
 
-    return 0;
-}
+//     return 0;
+// }

@@ -1,0 +1,1 @@
+gcc  @(Get-ChildItem -Recurse -Filter *.c | ForEach-Object { $_.FullName }) -o main.exe
