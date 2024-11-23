@@ -1,23 +1,20 @@
 #include <stdio.h>
 #include "./utils/utils.h"
-#include "./sorting_algos/bubble_sort.h"
+#include "./sorting_algos/selection_sort.h"
 
-int main()
-{
-    int array[4] = {2, 3, 1, 4};
+int main() {
+    int array[10] = {34, 7, 23, 32, 5, 62, 78, 45, 12, 89};
     int array_size = ARRAY_SIZE(array);
 
-    // Initialise a stack with content of unsorted array
-    Stack stack;
-    init_stack(&stack);
-    for (int i = array_size - 1; i >= 0; i--)
-    {
-        push(&stack, array[i]);
-    }
-    print_stack(&stack);
+    printf("Unsorted array:\n");
+    printArray(array, array_size);
 
-    stack_bubble_sort(&stack);
-    print_stack(&stack);
-    
+    selection_sort(array, array_size );
+
+    printf("Sorted array:\n");
+    printArray(array, array_size);
+
+
+
     return 0;
 }
