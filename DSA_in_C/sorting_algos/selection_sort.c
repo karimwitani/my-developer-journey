@@ -13,10 +13,10 @@
  */
 void selection_sort(int arr[], int arr_size)
 {
-    for (int i = 0; i < arr_size; i++)
+    for (int i = 1; i < arr_size; i++)
     {
-        int min_idx = i;
-        int min_value = arr[i];
+        int min_idx = i - 1;
+        int min_value = arr[min_idx];
         for (int j = i; j < arr_size; j++)
         {
             if (arr[j] < min_value)
@@ -25,7 +25,7 @@ void selection_sort(int arr[], int arr_size)
                 min_value = arr[j];
             }
         }
-        swap(arr, i, min_idx);
+        swap(arr, i - 1, min_idx);
     }
 }
 
